@@ -1,0 +1,6 @@
+{
+  "name": "Lingualyze",
+  "description": "Interactive psycholinguistic and neurolinguistic research platform analyzing Kazakh sentence processing, word order effects, cognitive load, and multilingual reading speeds.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
