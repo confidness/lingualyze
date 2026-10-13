@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  UserCheck, 
-  Sparkles, 
-  Check, 
-  ArrowRight, 
-  RefreshCw, 
-  Info,
+import {
+  Check,
+  ArrowRight,
   Phone,
   User,
   Calendar,
-  Globe2,
-  AlertCircle
+  AlertCircle,
+  ShieldCheck
 } from 'lucide-react';
 import { LanguageCode, LanguageDominanceGroup, ParticipantProfile } from '../types';
 import { translations } from '../data/translations';
@@ -22,16 +18,35 @@ interface ParticipantOnboardingProps {
   lang: LanguageCode;
   isResearcher?: boolean;
   onProceedToExperiment: () => void;
+  onOpenPrivacy?: () => void;
 }
+
+const inputCls = (hasError?: string) =>
+  `w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all focus:outline-hidden ${
+    hasError
+      ? 'border-rose-300 dark:border-rose-700 bg-rose-50/40 dark:bg-rose-950/20 text-slate-900 dark:text-slate-100 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20'
+      : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-emerald-500/20'
+  }`;
+
+const FieldError: React.FC<{ msg?: string }> = ({ msg }) =>
+  msg ? (
+    <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1">
+      <AlertCircle className="w-3.5 h-3.5" />
+      <span>{msg}</span>
+    </p>
+  ) : null;
 
 export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
   currentParticipant,
   setCurrentParticipant,
   lang,
   isResearcher = false,
-  onProceedToExperiment
+  onProceedToExperiment,
+  onOpenPrivacy
 }) => {
   const t = translations[lang];
+  const tr = (kk: string, ru: string, en: string) => (lang === 'kk' ? kk : lang === 'ru' ? ru : en);
+
   const [profile, setProfile] = useState<ParticipantProfile>({
     ...currentParticipant,
     studentName: currentParticipant.studentName || currentParticipant.name || '',
@@ -56,17 +71,9 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
 
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  // Phone number formatter & cleaner
-  const formatPhoneNumber = (val: string) => {
-    // Keep digits and leading +
-    const cleaned = val.replace(/[^\d+]/g, '');
-    return cleaned;
-  };
-
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawVal = e.target.value;
-    const formatted = formatPhoneNumber(rawVal);
-    setProfile(prev => ({ ...prev, phoneNumber: formatted }));
+    // Keep digits and leading +
+    setProfile(prev => ({ ...prev, phoneNumber: e.target.value.replace(/[^\d+]/g, '') }));
     if (errors.phoneNumber) {
       setErrors(prev => ({ ...prev, phoneNumber: undefined }));
     }
@@ -91,18 +98,16 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
   const validateForm = (): boolean => {
     const newErrors: { studentName?: string; phoneNumber?: string; age?: string } = {};
 
-    // Validate Student Name
     if (!profile.studentName || profile.studentName.trim().length < 2) {
-      newErrors.studentName = t.nameError || 'Please enter student name';
+      newErrors.studentName = t.nameError || 'Please enter your name';
     }
 
-    // Validate Phone Number: must have at least 10 digits
+    // Phone number must have at least 10 digits
     const digitsOnly = (profile.phoneNumber || '').replace(/\D/g, '');
     if (!profile.phoneNumber || digitsOnly.length < 10) {
       newErrors.phoneNumber = t.phoneError || 'Please enter a valid phone number (at least 10 digits)';
     }
 
-    // Validate Age
     const ageNum = Number(profile.age);
     if (!profile.age || isNaN(ageNum) || ageNum < 6 || ageNum > 99) {
       newErrors.age = t.ageError || 'Age must be between 6 and 99';
@@ -135,7 +140,7 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
   };
 
   const loadPreset = (preset: typeof sampleParticipantProfiles[0]) => {
-    const updated: ParticipantProfile = {
+    setProfile({
       ...profile,
       id: preset.id,
       name: preset.name,
@@ -147,47 +152,55 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
       dailyKazakhUsagePercent: preset.dailyKazakhUsagePercent,
       selfRatedReadingProficiency: preset.selfRatedReadingProficiency,
       primaryHomeLanguage: preset.primaryHomeLanguage,
-    };
-    setProfile(updated);
+    });
     setErrors({});
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 2000);
   };
 
-  const generateNewId = () => {
-    const prefix = 
-      profile.dominanceGroup === 'kazakh_dominant' ? 'KZ' : 
-      profile.dominanceGroup === 'bilingual_balanced' ? 'BI' : 'L2';
-    const randomDigits = Math.floor(100 + Math.random() * 900);
-    const newId = `P-${prefix}-${randomDigits}`;
-    setProfile(prev => ({ ...prev, id: newId }));
-  };
+  const languageOptions = [
+    {
+      id: 'kazakh_dominant', domId: 'cohort-option-kazakh', tag: 'L1 Native', full: t.groupKazakhDominant,
+      plain: tr('Негізінен қазақша сөйлеймін', 'В основном говорю по-казахски', 'I mostly speak Kazakh'),
+      on: 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20', ink: 'text-emerald-600 dark:text-emerald-400'
+    },
+    {
+      id: 'bilingual_balanced', domId: 'cohort-option-bilingual', tag: 'Bilingual', full: t.groupBilingual,
+      plain: tr('Қазақша және орысша бірдей', 'Одинаково по-казахски и по-русски', 'Kazakh and Russian equally'),
+      on: 'bg-teal-50/70 dark:bg-teal-950/40 border-teal-500 ring-2 ring-teal-500/20', ink: 'text-teal-600 dark:text-teal-400'
+    },
+    {
+      id: 'kazakh_l2', domId: 'cohort-option-l2', tag: 'L2 Learner', full: t.groupL2,
+      plain: tr('Қазақ тілін үйреніп жүрмін', 'Я изучаю казахский язык', "I'm learning Kazakh"),
+      on: 'bg-amber-50/70 dark:bg-amber-950/40 border-amber-500 ring-2 ring-amber-500/20', ink: 'text-amber-600 dark:text-amber-400'
+    },
+  ] as const;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-16">
-      
-      {/* Header Banner */}
-      <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-            <UserCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>{t.participantProfile}</span>
+    <div className="max-w-xl mx-auto pb-16">
+      <form
+        onSubmit={handleSave}
+        className="p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-6"
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              {t.studentLoginTitle}
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {tr('Бұл бір минут алады. Нәтижеңіз осы атпен сақталады.', 'Это займёт минуту. Результат сохранится под этим именем.', 'This takes a minute. Your results are saved under this name.')}
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">
-            {t.studentLoginTitle}
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {t.studentLoginSubtitle}
-          </p>
+          {isResearcher && (
+            <span className="shrink-0 text-[11px] font-mono px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold">
+              ID: {profile.id}
+            </span>
+          )}
         </div>
 
-        {/* Quick Presets for Demo (researchers only: they are fake students) */}
+        {/* Demo presets (researchers only: these are fake participants) */}
         {isResearcher && (
-        <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-            {t.studentPresetLabel}
-          </span>
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mr-1">{t.studentPresetLabel}</span>
             {sampleParticipantProfiles.map(p => (
               <button
                 key={p.id}
@@ -195,186 +208,95 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
                 id={`preset-btn-${p.id}`}
                 onClick={() => loadPreset(p)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-mono font-semibold border transition-all cursor-pointer ${
-                  profile.studentName === p.studentName 
-                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 font-bold shadow-xs' 
-                    : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100'
+                  profile.studentName === p.studentName
+                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
+                    : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
-                title={`${p.studentName} (${p.age} жас, ${p.phoneNumber})`}
               >
                 {p.studentName.split(' ')[0]}
               </button>
             ))}
           </div>
-        </div>
         )}
-      </div>
 
-      {/* Main Student Registration Form */}
-      <form onSubmit={handleSave} className="space-y-6">
-        
-        {/* Section 1: Required Student Identification Credentials */}
-        <div className="p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-6">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-            <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>{lang === 'kk' ? 'Оқушының негізгі деректері' : lang === 'ru' ? 'Основные данные учащегося' : 'Student Information'}</span>
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {lang === 'kk' ? 'Барлық сынақ нәтижелері осы деректермен сақталады' : lang === 'ru' ? 'Результаты тестов будут привязаны к этим данным' : 'Your results will be saved under this name'}
-              </p>
+        {/* Name */}
+        <div>
+          <label htmlFor="student-name-input" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
+            {t.labelStudentName}
+          </label>
+          <div className="relative">
+            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input
+              id="student-name-input"
+              type="text"
+              autoComplete="name"
+              value={profile.studentName || ''}
+              onChange={handleNameChange}
+              placeholder={t.placeholderStudentName}
+              aria-invalid={!!errors.studentName}
+              className={inputCls(errors.studentName)}
+              required
+            />
+          </div>
+          <FieldError msg={errors.studentName} />
+        </div>
+
+        {/* Phone + age */}
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_8rem] gap-4">
+          <div>
+            <label htmlFor="student-phone-input" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
+              {t.labelPhoneNumber}
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <input
+                id="student-phone-input"
+                type="tel"
+                autoComplete="tel"
+                value={profile.phoneNumber || ''}
+                onChange={handlePhoneChange}
+                placeholder={t.placeholderPhoneNumber}
+                aria-invalid={!!errors.phoneNumber}
+                className={`${inputCls(errors.phoneNumber)} font-mono`}
+                required
+              />
             </div>
-            {isResearcher && (
-              <span className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold">
-                ID: {profile.id}
-              </span>
-            )}
+            <FieldError msg={errors.phoneNumber} />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            
-            {/* Field 1: Student Name / Full Name */}
-            <div className="sm:col-span-2">
-              <label 
-                htmlFor="student-name-input"
-                className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5"
-              >
-                {t.labelStudentName} <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <User className="w-4 h-4" />
-                </div>
-                <input
-                  id="student-name-input"
-                  type="text"
-                  value={profile.studentName || ''}
-                  onChange={handleNameChange}
-                  placeholder={t.placeholderStudentName}
-                  className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all focus:outline-hidden ${
-                    errors.studentName
-                      ? 'border-rose-300 dark:border-rose-700 bg-rose-50/40 dark:bg-rose-950/20 text-slate-900 dark:text-slate-100 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20'
-                      : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-emerald-500/20'
-                  }`}
-                  required
-                />
-              </div>
-              {errors.studentName && (
-                <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  <span>{errors.studentName}</span>
-                </p>
-              )}
+          <div>
+            <label htmlFor="student-age-input" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
+              {t.labelAge}
+            </label>
+            <div className="relative">
+              <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <input
+                id="student-age-input"
+                type="number"
+                inputMode="numeric"
+                min={6}
+                max={99}
+                value={profile.age || ''}
+                onChange={handleAgeChange}
+                placeholder={t.placeholderAge}
+                aria-invalid={!!errors.age}
+                className={inputCls(errors.age)}
+                required
+              />
             </div>
-
-            {/* Field 2: Phone Number with Validation */}
-            <div>
-              <label 
-                htmlFor="student-phone-input"
-                className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5"
-              >
-                {t.labelPhoneNumber} <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Phone className="w-4 h-4" />
-                </div>
-                <input
-                  id="student-phone-input"
-                  type="tel"
-                  value={profile.phoneNumber || ''}
-                  onChange={handlePhoneChange}
-                  placeholder={t.placeholderPhoneNumber}
-                  className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm font-mono transition-all focus:outline-hidden ${
-                    errors.phoneNumber
-                      ? 'border-rose-300 dark:border-rose-700 bg-rose-50/40 dark:bg-rose-950/20 text-slate-900 dark:text-slate-100 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20'
-                      : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-emerald-500/20'
-                  }`}
-                  required
-                />
-              </div>
-              {errors.phoneNumber ? (
-                <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  <span>{errors.phoneNumber}</span>
-                </p>
-              ) : (
-                <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-                  {lang === 'kk' ? 'Формат: +7 (7XX) XXX-XX-XX немесе 10+ сан' : lang === 'ru' ? 'Формат: +7 (7XX) XXX-XX-XX или 10+ цифр' : 'Format: +7 (7XX) XXX-XX-XX or 10+ digits'}
-                </p>
-              )}
-            </div>
-
-            {/* Field 3: Age */}
-            <div>
-              <label 
-                htmlFor="student-age-input"
-                className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5"
-              >
-                {t.labelAge} <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Calendar className="w-4 h-4" />
-                </div>
-                <input
-                  id="student-age-input"
-                  type="number"
-                  min={6}
-                  max={99}
-                  value={profile.age || ''}
-                  onChange={handleAgeChange}
-                  placeholder={t.placeholderAge}
-                  className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all focus:outline-hidden ${
-                    errors.age
-                      ? 'border-rose-300 dark:border-rose-700 bg-rose-50/40 dark:bg-rose-950/20 text-slate-900 dark:text-slate-100 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20'
-                      : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-emerald-500/20'
-                  }`}
-                  required
-                />
-              </div>
-              {errors.age && (
-                <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  <span>{errors.age}</span>
-                </p>
-              )}
-            </div>
-
+            <FieldError msg={errors.age} />
           </div>
         </div>
 
-        {/* Section 2: Language Dominance Group Selection */}
-        <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <Globe2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>
-                {isResearcher
-                  ? t.languageGroup
-                  : lang === 'kk' ? 'Қазақ тілін қаншалықты жиі қолданасыз?' : lang === 'ru' ? 'Как часто вы говорите по-казахски?' : 'How much do you use Kazakh?'}
-              </span>
-            </label>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {([
-              {
-                id: 'kazakh_dominant', domId: 'cohort-option-kazakh', tag: 'L1 Native', full: t.groupKazakhDominant,
-                plain: lang === 'kk' ? 'Негізінен қазақша сөйлеймін' : lang === 'ru' ? 'В основном говорю по-казахски' : 'I mostly speak Kazakh',
-                on: 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20', ink: 'text-emerald-600 dark:text-emerald-400'
-              },
-              {
-                id: 'bilingual_balanced', domId: 'cohort-option-bilingual', tag: 'Bilingual', full: t.groupBilingual,
-                plain: lang === 'kk' ? 'Қазақша және орысша бірдей' : lang === 'ru' ? 'Одинаково по-казахски и по-русски' : 'Kazakh and Russian equally',
-                on: 'bg-teal-50/70 dark:bg-teal-950/40 border-teal-500 ring-2 ring-teal-500/20', ink: 'text-teal-600 dark:text-teal-400'
-              },
-              {
-                id: 'kazakh_l2', domId: 'cohort-option-l2', tag: 'L2 Learner', full: t.groupL2,
-                plain: lang === 'kk' ? 'Қазақ тілін үйреніп жүрмін' : lang === 'ru' ? 'Я изучаю казахский язык' : "I'm learning Kazakh",
-                on: 'bg-amber-50/70 dark:bg-amber-950/40 border-amber-500 ring-2 ring-amber-500/20', ink: 'text-amber-600 dark:text-amber-400'
-              },
-            ] as const).map(opt => {
+        {/* Language use */}
+        <fieldset>
+          <legend className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+            {isResearcher
+              ? t.languageGroup
+              : tr('Қазақ тілін қаншалықты жиі қолданасыз?', 'Как часто вы говорите по-казахски?', 'How much do you use Kazakh?')}
+          </legend>
+          <div className="grid grid-cols-1 gap-2">
+            {languageOptions.map(opt => {
               const selected = profile.dominanceGroup === opt.id;
               return (
                 <button
@@ -383,44 +305,35 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
                   id={opt.domId}
                   aria-pressed={selected}
                   onClick={() => setProfile({ ...profile, dominanceGroup: opt.id as LanguageDominanceGroup })}
-                  className={`p-4 rounded-2xl border text-left cursor-pointer transition-all ${
+                  className={`px-4 py-3 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between gap-3 ${
                     selected
-                      ? `${opt.on} shadow-xs`
+                      ? opt.on
                       : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/50 dark:hover:bg-slate-800'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  <span>
+                    <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
                       {isResearcher ? opt.full : opt.plain}
                     </span>
-                    {selected && <Check className={`w-4 h-4 shrink-0 stroke-[2.5] ${opt.ink}`} />}
-                  </div>
-                  {isResearcher && (
-                    <span className={`mt-1 block text-[11px] font-mono font-bold uppercase ${opt.ink}`}>{opt.tag}</span>
-                  )}
+                    {isResearcher && (
+                      <span className={`block text-[11px] font-mono font-bold uppercase ${opt.ink}`}>{opt.tag}</span>
+                    )}
+                  </span>
+                  <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${selected ? `border-current ${opt.ink}` : 'border-slate-300 dark:border-slate-600'}`}>
+                    {selected && <Check className="w-3 h-3 stroke-[3]" />}
+                  </span>
                 </button>
               );
             })}
           </div>
-        </div>
+        </fieldset>
 
-        {/* Submit Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <Info className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span>
-              {lang === 'kk' 
-                ? 'Оқушы деректері сақталып, әрбір сынақ нәтижесімен байланыстырылады.' 
-                : lang === 'ru'
-                ? 'Данные учащегося сохраняются в сессии и привязываются ко всем ответам.'
-                : 'Your details are linked to your answers so you can see your results.'}
-            </span>
-          </div>
-
+        {/* Submit */}
+        <div className="space-y-3 pt-1">
           <button
             type="submit"
             id="start-assessment-btn"
-            className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-sm shadow-[0_4px_12px_rgba(5,150,105,0.25)] transition-all active:scale-[0.99] cursor-pointer shrink-0"
+            className="w-full inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-base shadow-[0_4px_12px_rgba(5,150,105,0.25)] transition-all active:scale-[0.99] cursor-pointer"
           >
             {savedSuccess ? (
               <>
@@ -434,10 +347,20 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
               </>
             )}
           </button>
+
+          {onOpenPrivacy && (
+            <button
+              type="button"
+              onClick={onOpenPrivacy}
+              className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>{tr('Деректеріңіз қалай қолданылады?', 'Как используются ваши данные?', 'How we use your data')}</span>
+            </button>
+          )}
         </div>
 
       </form>
-
     </div>
   );
 };

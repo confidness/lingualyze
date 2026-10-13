@@ -204,7 +204,7 @@ export const MethodologyHypotheses: React.FC<MethodologyHypothesesProps> = ({
                   <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-mono">
                     ΔRT = RT(OSV) - RT(SOV)<br/>
                     {lang === 'kk' ? 'Күтілетін айырмашылық:' : lang === 'ru' ? 'Ожидаемая разница:' : 'Expected delta:'} +320ms - +480ms<br/>
-                    Студенттік t-тест және ANOVA арқылы p &lt; 0.05 деңгейінде тексеріледі.
+                    t-тест және ANOVA арқылы p &lt; 0.05 деңгейінде тексеріледі.
                   </p>
                 </div>
 

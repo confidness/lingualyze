@@ -43,10 +43,10 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     logoutConfirm: 'Жүйеден шығуды растайсыз ба? Белсенді сессия тазартылады.',
     loggedOutToast: 'Сіз жүйеден сәтті шықтыңыз. Қайта кіру үшін мәліметтерді енгізіңіз.',
     guestUser: 'Қонақ (кірмеген)',
-    loginToStartPrompt: 'Сынақты бастау үшін алдымен оқушы аты-жөнін, телефон нөмірін және жасын енгізіп кіріңіз',
+    loginToStartPrompt: 'Тестті бастау үшін алдымен аты-жөніңізді, телефон нөміріңізді және жасыңызды енгізіңіз',
     
     // Header & Common
-    changeProfile: 'Оқушы деректерін өзгерту',
+    changeProfile: 'Деректерімді өзгерту',
     soundOn: 'Дыбыс қосулы',
     soundOff: 'Дыбыс өшірулі',
     completedBadge: 'сынақ өтті',
@@ -54,20 +54,20 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     runTestToMeasure: 'Өлшеу үшін сынақты бастаңыз',
     
     // Student Login & Onboarding
-    studentLoginTitle: 'Оқушыны тіркеу / Кіру',
-    studentLoginSubtitle: 'Сынақты бастамас бұрын оқушының аты-жөнін, телефон нөмірін және жасын енгізіңіз',
-    labelStudentName: 'Оқушының аты-жөні',
+    studentLoginTitle: 'Тестке тіркелу',
+    studentLoginSubtitle: 'Бастамас бұрын аты-жөніңізді, телефон нөміріңізді және жасыңызды енгізіңіз',
+    labelStudentName: 'Аты-жөніңіз',
     placeholderStudentName: 'Мысалы: Әлихан Нұрланұлы',
     labelPhoneNumber: 'Телефон нөмірі',
     placeholderPhoneNumber: '+7 (701) 234-56-78',
     labelAge: 'Жасы',
     placeholderAge: '16',
     phoneError: 'Телефон нөмірін толық енгізіңіз (кемінде 10 сан)',
-    nameError: 'Оқушының аты-жөнін енгізіңіз (кемінде 2 әріп)',
+    nameError: 'Аты-жөніңізді енгізіңіз (кемінде 2 әріп)',
     ageError: 'Жасы 6 мен 99 аралығында болуы тиіс',
     startAssessmentBtn: 'Сынақты бастау',
     studentPresetLabel: 'Дайын үлгілер:',
-    studentCredentialsSaved: 'Оқушы мәліметтері тіркелді!',
+    studentCredentialsSaved: 'Мәліметтер сақталды!',
 
     // Dynamic Metric Cards
     metricLatestRt: 'Соңғы реакция уақыты',
@@ -93,7 +93,7 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     memoryHigh: 'Өте жоғары',
     
     // Participant
-    participantProfile: 'Оқушы профилі',
+    participantProfile: 'Сіздің профиліңіз',
     participantDesc: 'Тілдік доминанттылық тобы мен мәліметтерді белгілеңіз',
     participantId: 'Қатысушы ID',
     generateId: 'Жаңа ID генерациялау',
@@ -238,8 +238,8 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
 
     // Admin / Researcher Dashboard
     adminDashboardTitle: 'Зерттеуші / Админ басқару панелі',
-    adminDashboardSubtitle: 'Оқушылардың тестілеу жазбалары, дәлдік, реакция уақыты және жеке тапсырмалар талдауы',
-    colStudentName: 'Оқушының аты-жөні',
+    adminDashboardSubtitle: 'Қатысушылардың тест жазбалары, дәлдік, реакция уақыты және тапсырмалар талдауы',
+    colStudentName: 'Қатысушының аты-жөні',
     colPhoneNumber: 'Телефон нөмірі',
     colAge: 'Жасы',
     colAssessedLevel: 'Тіл деңгейі',
@@ -316,7 +316,7 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     loginToStartPrompt: 'Для начала тестирования войдите или зарегистрируйтесь',
     
     // Header & Common
-    changeProfile: 'Сменить данные учащегося',
+    changeProfile: 'Изменить мои данные',
     soundOn: 'Звук включен',
     soundOff: 'Звук выключен',
     completedBadge: 'проб завершено',
@@ -324,20 +324,20 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     runTestToMeasure: 'Начните тест для замера параметров',
     
     // Student Login & Onboarding
-    studentLoginTitle: 'Регистрация / Вход учащегося',
+    studentLoginTitle: 'Регистрация на тест',
     studentLoginSubtitle: 'Перед началом укажите имя, номер телефона и возраст',
-    labelStudentName: 'ФИО учащегося',
+    labelStudentName: 'Ваше имя и фамилия',
     placeholderStudentName: 'Например: Алихан Нурланулы',
     labelPhoneNumber: 'Номер телефона',
     placeholderPhoneNumber: '+7 (701) 234-56-78',
     labelAge: 'Возраст',
     placeholderAge: '16',
     phoneError: 'Введите корректный номер телефона (не менее 10 цифр)',
-    nameError: 'Введите ФИО учащегося (не менее 2 символов)',
+    nameError: 'Введите имя (не менее 2 символов)',
     ageError: 'Возраст должен быть от 6 до 99 лет',
     startAssessmentBtn: 'Начать тестирование',
     studentPresetLabel: 'Быстрые пресеты:',
-    studentCredentialsSaved: 'Данные учащегося зарегистрированы!',
+    studentCredentialsSaved: 'Данные сохранены!',
 
     // Dynamic Metric Cards
     metricLatestRt: 'Последнее время реакции',
@@ -508,8 +508,8 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
 
     // Admin / Researcher Dashboard
     adminDashboardTitle: 'Панель исследователя / Администратора',
-    adminDashboardSubtitle: 'Результаты тестирования учащихся, точность, время реакции и отчет по заданиям',
-    colStudentName: 'ФИО учащегося',
+    adminDashboardSubtitle: 'Результаты тестирования участников, точность, время реакции и отчет по заданиям',
+    colStudentName: 'ФИО участника',
     colPhoneNumber: 'Номер телефона',
     colAge: 'Возраст',
     colAssessedLevel: 'Уровень',
@@ -586,7 +586,7 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     loginToStartPrompt: 'Please log in or register before starting the test',
     
     // Header & Common
-    changeProfile: 'Change Student Info',
+    changeProfile: 'Edit my details',
     soundOn: 'Sound: On',
     soundOff: 'Sound: Off',
     completedBadge: 'trials done',
@@ -594,20 +594,20 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
     runTestToMeasure: 'Start an experiment to measure parameters',
     
     // Student Login & Onboarding
-    studentLoginTitle: 'Student Registration / Login',
+    studentLoginTitle: 'Sign up for the test',
     studentLoginSubtitle: 'Enter your name, phone number and age before you start',
-    labelStudentName: 'Student Name / Full Name',
+    labelStudentName: 'Your full name',
     placeholderStudentName: 'e.g. Alikhan Nurlanuly',
     labelPhoneNumber: 'Phone Number',
     placeholderPhoneNumber: '+7 (701) 234-56-78',
     labelAge: 'Age',
     placeholderAge: '16',
     phoneError: 'Please enter a valid phone number (at least 10 digits)',
-    nameError: 'Please enter student name (at least 2 characters)',
+    nameError: 'Please enter your name (at least 2 characters)',
     ageError: 'Age must be between 6 and 99',
     startAssessmentBtn: 'Start Assessment',
     studentPresetLabel: 'Quick Presets:',
-    studentCredentialsSaved: 'Student credentials saved!',
+    studentCredentialsSaved: 'Details saved!',
 
     // Dynamic Metric Cards
     metricLatestRt: 'Last Reaction Time',
@@ -778,8 +778,8 @@ export const translations: Record<LanguageCode, Record<string, string>> = {
 
     // Admin / Researcher Dashboard
     adminDashboardTitle: 'Researcher / Admin Dashboard',
-    adminDashboardSubtitle: 'Student test records, accuracy, latency, and individual task breakdown',
-    colStudentName: 'Student Name',
+    adminDashboardSubtitle: 'Participant test records, accuracy, latency, and individual task breakdown',
+    colStudentName: 'Participant Name',
     colPhoneNumber: 'Phone Number',
     colAge: 'Age',
     colAssessedLevel: 'Level',

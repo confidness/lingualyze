@@ -455,7 +455,7 @@ export const ResearchConclusionsSection: React.FC<ResearchConclusionsSectionProp
               {lang === 'kk'
                 ? 'L1 Ана тілі, Билингвтер және L2 Үйренушілердің сөйлемді өңдеу айырмашылығы'
                 : lang === 'ru'
-                ? 'Различия в обработке предложений: L1 носители, Билингвы и L2 учащиеся'
+                ? 'Различия в обработке предложений: L1 носители, билингвы и изучающие язык (L2)'
                 : 'Differential Sentence Processing Across L1, Bilingual, and L2 Cohorts'}
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">

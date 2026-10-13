@@ -308,6 +308,7 @@ export default function App() {
             lang={lang}
             isResearcher={isResearcher}
             onProceedToExperiment={() => setActiveTab('experiment')}
+            onOpenPrivacy={() => setActiveTab('privacy')}
           />
         )}
 
