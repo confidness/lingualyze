@@ -6,15 +6,16 @@ import {
   StimulusSentence, 
   TrialResult,
   ThemeMode,
-  UserRole
+  UserRole,
+  RESEARCH_TABS
 } from './types';
-import { initialStimulusSentences } from './data/sentences';
 import { generateExpandedStimuliBattery } from './data/stimuliGenerator';
-import { sampleParticipantProfiles } from './data/mockCohorts';
 import { Navbar } from './components/Navbar';
 import { OverviewSection } from './components/OverviewSection';
 import { ParticipantOnboarding } from './components/ParticipantOnboarding';
 import { ExperimentRunner } from './components/ExperimentRunner';
+import { MyResults } from './components/MyResults';
+import { InteractiveSimulator } from './components/InteractiveSimulator';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { SentenceDatabase } from './components/SentenceDatabase';
 import { NeurolinguisticInsights } from './components/NeurolinguisticInsights';
@@ -23,7 +24,22 @@ import { PrivacyPolicyTab } from './components/PrivacyPolicyTab';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AuthModal } from './components/AuthModal';
 import { translations } from './data/translations';
-import { CheckCircle2, LogOut } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
+
+const newGuestProfile = (): ParticipantProfile => ({
+  id: 'P-KZ-' + Math.floor(100 + Math.random() * 900),
+  name: '',
+  studentName: '',
+  phoneNumber: '',
+  age: '' as any,
+  dominanceGroup: 'kazakh_dominant',
+  cefrLevel: 'A1',
+  educationLevel: 'high_school',
+  dailyKazakhUsagePercent: 80,
+  selfRatedReadingProficiency: 4,
+  primaryHomeLanguage: 'Kazakh',
+  createdAt: new Date().toISOString()
+});
 
 export default function App() {
   // Navigation & Language
@@ -64,10 +80,12 @@ export default function App() {
   // Auth & Role Switcher Modal
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // Active Participant Profile
-  const [currentParticipant, setCurrentParticipant] = useState<ParticipantProfile>(() => {
-    return sampleParticipantProfiles[0] as unknown as ParticipantProfile;
-  });
+  // Active Participant Profile (visitors start as an unnamed guest, not a demo student)
+  const [currentParticipant, setCurrentParticipant] = useState<ParticipantProfile>(newGuestProfile);
+
+  // Research tabs fall back to Home unless signed in as researcher
+  const isResearcher = currentRole === 'researcher';
+  const tab: ActiveTab = !isResearcher && RESEARCH_TABS.includes(activeTab) ? 'overview' : activeTab;
 
   // Experimental Stimuli Battery (120 stimuli across CEFR levels and conditions)
   const [stimuli, setStimuli] = useState<StimulusSentence[]>(() => {
@@ -82,6 +100,7 @@ export default function App() {
         trialId: 'TRIAL-PRE-101',
         stimulusId: 'stim-a1-01',
         participantId: 'P-KZ-104',
+        dominanceGroup: 'kazakh_dominant',
         cefrLevel: 'A1',
         part1Correct: true,
         part1RtMs: 1540,
@@ -106,6 +125,7 @@ export default function App() {
         trialId: 'TRIAL-PRE-102',
         stimulusId: 'stim-a1-02',
         participantId: 'P-KZ-104',
+        dominanceGroup: 'kazakh_dominant',
         cefrLevel: 'A1',
         part1Correct: true,
         part1RtMs: 1720,
@@ -130,6 +150,7 @@ export default function App() {
         trialId: 'TRIAL-PRE-103',
         stimulusId: 'stim-a2-01',
         participantId: 'P-KZ-104',
+        dominanceGroup: 'kazakh_dominant',
         cefrLevel: 'A2',
         part1Correct: true,
         part1RtMs: 1600,
@@ -154,6 +175,7 @@ export default function App() {
         trialId: 'TRIAL-PRE-104',
         stimulusId: 'stim-b1-02',
         participantId: 'P-KZ-104',
+        dominanceGroup: 'kazakh_dominant',
         cefrLevel: 'B1',
         part1Correct: true,
         part1RtMs: 2100,
@@ -178,6 +200,7 @@ export default function App() {
         trialId: 'TRIAL-PRE-105',
         stimulusId: 'stim-b2-02',
         participantId: 'P-KZ-104',
+        dominanceGroup: 'kazakh_dominant',
         cefrLevel: 'B2',
         part1Correct: false,
         part1RtMs: 2400,
@@ -216,22 +239,7 @@ export default function App() {
       return;
     }
 
-    const guestProfile: ParticipantProfile = {
-      id: 'P-KZ-' + Math.floor(100 + Math.random() * 900),
-      name: '',
-      studentName: '',
-      phoneNumber: '',
-      age: '' as any,
-      dominanceGroup: 'kazakh_dominant',
-      cefrLevel: 'A1',
-      educationLevel: 'high_school',
-      dailyKazakhUsagePercent: 80,
-      selfRatedReadingProficiency: 4,
-      primaryHomeLanguage: 'Kazakh',
-      createdAt: new Date().toISOString()
-    };
-
-    setCurrentParticipant(guestProfile);
+    setCurrentParticipant(newGuestProfile());
     try {
       localStorage.removeItem('lingualyze_current_student');
     } catch (e) {
@@ -283,42 +291,58 @@ export default function App() {
 
       {/* Main View Router */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
-        {activeTab === 'overview' && (
+        {tab === 'overview' && (
           <OverviewSection
             setActiveTab={setActiveTab}
             lang={lang}
+            allTrials={allTrials}
+            currentParticipant={currentParticipant}
           />
         )}
 
-        {activeTab === 'participant' && (
+        {/* Taking the test requires a name first, so unnamed visitors land on the sign-up form */}
+        {(tab === 'participant' || (tab === 'experiment' && !currentParticipant.studentName)) && (
           <ParticipantOnboarding
             currentParticipant={currentParticipant}
             setCurrentParticipant={setCurrentParticipant}
             lang={lang}
+            isResearcher={isResearcher}
             onProceedToExperiment={() => setActiveTab('experiment')}
           />
         )}
 
-        {activeTab === 'experiment' && (
+        {tab === 'experiment' && currentParticipant.studentName && (
           <ExperimentRunner
             stimuli={stimuli}
             currentParticipant={currentParticipant}
             lang={lang}
             soundEnabled={soundEnabled}
+            isResearcher={isResearcher}
             onTrialComplete={handleTrialComplete}
             onSessionComplete={handleSessionComplete}
             setActiveTab={setActiveTab}
           />
         )}
 
-        {activeTab === 'analytics' && (
-          <AnalyticsDashboard
+        {tab === 'results' && (
+          <MyResults
             allTrials={allTrials}
+            currentParticipant={currentParticipant}
             lang={lang}
+            setActiveTab={setActiveTab}
           />
         )}
 
-        {activeTab === 'admin' && (
+        {tab === 'analytics' && (
+          <AnalyticsDashboard
+            allTrials={allTrials}
+            lang={lang}
+            currentRole={currentRole}
+            onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          />
+        )}
+
+        {tab === 'admin' && (
           <AdminDashboard
             lang={lang}
             currentRole={currentRole}
@@ -326,7 +350,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'database' && (
+        {tab === 'database' && (
           <SentenceDatabase
             stimuli={stimuli}
             setStimuli={setStimuli}
@@ -337,20 +361,21 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'neurolinguistics' && (
-          <NeurolinguisticInsights
-            lang={lang}
-          />
+        {tab === 'neurolinguistics' && (
+          <div className="space-y-8">
+            <InteractiveSimulator setActiveTab={setActiveTab} lang={lang} />
+            <NeurolinguisticInsights lang={lang} />
+          </div>
         )}
 
-        {activeTab === 'methodology' && (
+        {tab === 'methodology' && (
           <MethodologyHypotheses
             lang={lang}
             setActiveTab={setActiveTab}
           />
         )}
 
-        {activeTab === 'privacy' && (
+        {tab === 'privacy' && (
           <PrivacyPolicyTab
             lang={lang}
             currentRole={currentRole}
@@ -376,11 +401,11 @@ export default function App() {
             <span className="font-bold text-slate-900 dark:text-slate-100">Lingualyze</span>
             <span>•</span>
             <span>
-              {lang === 'kk' 
-                ? 'Қазақ тілінің психолингвистикалық және нейролингвистикалық ғылыми зерттеу платформасы'
+              {lang === 'kk'
+                ? 'Қазақ тілінде оқу дағдысын тексеру'
                 : lang === 'ru'
-                ? 'Научно-исследовательская психолингвистическая платформа казахского языка'
-                : 'Kazakh Psycholinguistic & Neurolinguistic Research Platform'}
+                ? 'Проверка навыков чтения на казахском языке'
+                : 'Check your Kazakh reading skills'}
             </span>
           </div>
           <div className="flex items-center gap-4 text-slate-400 dark:text-slate-500 font-mono">
@@ -391,9 +416,12 @@ export default function App() {
               {lang === 'kk' ? 'Этика & Құпиялылық' : lang === 'ru' ? 'Этика & Приватность' : 'Ethics & Privacy'}
             </button>
             <span>•</span>
-            <span>SOV Head-Final</span>
-            <span>•</span>
-            <span className="uppercase">{lang}</span>
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+            >
+              {lang === 'kk' ? 'Ғалымдарға' : lang === 'ru' ? 'Для учёных' : 'For researchers'}
+            </button>
           </div>
         </div>
       </footer>

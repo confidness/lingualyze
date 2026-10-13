@@ -23,7 +23,8 @@ import {
   Eye,
   Activity,
   Users,
-  PieChart
+  PieChart,
+  Sigma
 } from 'lucide-react';
 import { 
   LanguageCode, 
@@ -42,6 +43,7 @@ import {
 import { analyzeSessionData, SCIENTIFIC_STATISTICAL_BENCHMARKS } from '../utils/statistics';
 import { CohortComparativeCharts } from './CohortComparativeCharts';
 import { ResearchConclusionsSection } from './ResearchConclusionsSection';
+import { LiveDataAnalysis } from './LiveDataAnalysis';
 
 interface AnalyticsDashboardProps {
   allTrials: TrialResult[];
@@ -50,7 +52,7 @@ interface AnalyticsDashboardProps {
   onOpenAuthModal?: () => void;
 }
 
-type MainDashboardTab = 'conclusions' | 'cohort_comparison' | 'statistical_rigor' | 'trial_overview';
+type MainDashboardTab = 'live_data' | 'conclusions' | 'cohort_comparison' | 'statistical_rigor' | 'trial_overview';
 
 export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ 
   allTrials, 
@@ -60,8 +62,8 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
 }) => {
   const t = translations[lang];
 
-  // Default tab is 'conclusions' or 'cohort_comparison' to immediately show the scientific upgrades
-  const [activeMainTab, setActiveMainTab] = useState<MainDashboardTab>('conclusions');
+  // Default to the tab computed from recorded trials
+  const [activeMainTab, setActiveMainTab] = useState<MainDashboardTab>('live_data');
 
   // Advanced filters for statistical section
   const [selectedCohort, setSelectedCohort] = useState<'all' | LanguageDominanceGroup>('all');
@@ -113,30 +115,52 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
     const headers = [
       'TrialID',
       'ParticipantID',
+      'Cohort',
+      'StimulusID',
       'WordOrder',
       'CEFRLevel',
+      'Complexity',
+      'Length',
+      'Predictability',
+      'PresentationMode',
       'ReadingTimeMs',
       'WPM',
       'Part1Correct',
+      'Part1RtMs',
       'Part2Correct',
+      'Part2RtMs',
       'Part3Correct',
+      'Part3RtMs',
+      'QuestionRtMs',
       'IsOverallCorrect',
       'CognitiveLoadScore',
+      'PerWordRtMs',
       'Timestamp'
     ];
 
     const rows = allTrials.map(trial => [
       trial.trialId,
       trial.participantId,
+      trial.dominanceGroup ?? '',
+      trial.stimulusId,
       trial.wordOrder,
       trial.cefrLevel || 'A1',
+      trial.complexity,
+      trial.length,
+      trial.predictability,
+      trial.presentationMode,
       trial.readingTimeMs,
       trial.readingSpeedWpm,
       trial.part1Correct ? '1' : '0',
+      trial.part1RtMs ?? '',
       trial.part2Correct ? '1' : '0',
+      trial.part2RtMs ?? '',
       trial.part3Correct ? '1' : '0',
+      trial.part3RtMs ?? '',
+      trial.questionResponseTimeMs,
       trial.isCorrect ? '1' : '0',
       trial.cognitiveLoadScore,
+      (trial.perWordRtMs ?? []).join(';'),
       trial.timestamp
     ]);
 
@@ -213,6 +237,24 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       {/* ================= 4 PRIMARY TAB NAVIGATION CONTROLS ================= */}
       <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs">
         <button
+          onClick={() => setActiveMainTab('live_data')}
+          className={`flex-1 min-w-[200px] px-4 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            activeMainTab === 'live_data'
+              ? 'bg-white dark:bg-slate-700 text-emerald-800 dark:text-emerald-300 shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Sigma className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <span>
+            {lang === 'kk'
+              ? 'Нақты деректер (есептелген)'
+              : lang === 'ru'
+              ? 'Живые данные (расчёт)'
+              : 'Live data (computed)'}
+          </span>
+        </button>
+
+        <button
           onClick={() => setActiveMainTab('conclusions')}
           className={`flex-1 min-w-[200px] px-4 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
             activeMainTab === 'conclusions'
@@ -284,6 +326,12 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           </span>
         </button>
       </div>
+
+      {activeMainTab === 'live_data' && (
+        <div className="space-y-8 animate-in fade-in duration-200">
+          <LiveDataAnalysis allTrials={allTrials} lang={lang} />
+        </div>
+      )}
 
       {/* ================= TAB 1: RESEARCH CONCLUSIONS & DATASET ================= */}
       {activeMainTab === 'conclusions' && (

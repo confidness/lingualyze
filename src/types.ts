@@ -214,10 +214,14 @@ export type ActiveTab =
   | 'overview' 
   | 'methodology'
   | 'participant' 
-  | 'experiment' 
-  | 'analytics' 
+  | 'experiment'
+  | 'results'
+  | 'analytics'
   | 'database' 
   | 'neurolinguistics'
   | 'privacy'
   | 'admin';
+
+// Tabs only visible after researcher sign-in; everything else is the client-facing site
+export const RESEARCH_TABS: ActiveTab[] = ['analytics', 'admin', 'database', 'neurolinguistics', 'methodology'];
 

@@ -46,14 +46,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (setCurrentRole) setCurrentRole(role);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
 
-    // Scientist passcode: 23032011 (also supports admin123)
-    const cleanedPasscode = passcode.trim();
-    if (cleanedPasscode === '23032011' || cleanedPasscode === 'admin123') {
+    // Passcode is checked server-side so it never ships in the browser bundle
+    const ok = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ passcode: passcode.trim() })
+    }).then(res => res.ok).catch(() => false);
+
+    if (ok) {
       changeRole('researcher');
       setSuccessMessage(
         lang === 'kk'
@@ -115,10 +120,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
           <div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-              {lang === 'kk' ? 'Жүйеге кіру және Рөлді басқару' : lang === 'ru' ? 'Аутентификация и Роли' : 'Authentication & Access Control'}
+              {lang === 'kk' ? 'Ғалымдарға арналған кіру' : lang === 'ru' ? 'Вход для исследователей' : 'Researcher sign-in'}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {lang === 'kk' ? 'Зерттеуші құқықтарын қосу немесе тексеру' : lang === 'ru' ? 'Управление правами доступа исследователя' : 'Role-Based Access Control (RBAC)'}
+              {lang === 'kk' ? 'Толық деректер мен талдауға қол жеткізу' : lang === 'ru' ? 'Доступ к полным данным и анализу' : 'Access full data and analysis'}
             </p>
           </div>
         </div>

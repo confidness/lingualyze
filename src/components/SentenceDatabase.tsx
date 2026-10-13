@@ -60,10 +60,6 @@ export const SentenceDatabase: React.FC<SentenceDatabaseProps> = ({
   // Database Sub-Tabs: 'test_records' (default for research inspection) or 'stimuli'
   const [activeSubTab, setActiveSubTab] = useState<'test_records' | 'stimuli'>('stimuli');
 
-  // Inline Admin Unlock form state
-  const [adminPasscode, setAdminPasscode] = useState('');
-  const [passcodeError, setPasscodeError] = useState('');
-
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
   const [filterWordOrder, setFilterWordOrder] = useState<string>('all');
@@ -289,64 +285,6 @@ export const SentenceDatabase: React.FC<SentenceDatabaseProps> = ({
     downloadAnchor.click();
     downloadAnchor.remove();
   };
-
-  const handleAdminUnlock = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (adminPasscode.trim() === 'linguo2026' || adminPasscode.trim() === 'admin') {
-      setCurrentRole('researcher');
-      setAdminPasscode('');
-      setPasscodeError('');
-    } else {
-      setPasscodeError(lang === 'kk' ? 'Құпиясөз қате (linguo2026)' : 'Invalid passcode (try linguo2026)');
-    }
-  };
-
-  // If user is currently 'participant', show the Researcher Gate
-  if (currentRole !== 'researcher') {
-    return (
-      <div className="max-w-xl mx-auto p-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm text-center space-y-6 my-12">
-        <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto text-amber-600 dark:text-amber-400">
-          <Lock className="w-7 h-7" />
-        </div>
-
-        <div className="space-y-2">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            {lang === 'kk' ? 'Зерттеуші және ғалымдар басқару тақтасы' : lang === 'ru' ? 'Панель исследователя и ученого' : 'Researcher & Scientist Panel'}
-          </h2>
-          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            {lang === 'kk' 
-              ? 'Бұл бөлім тек психолингвист-зерттеушілерге арналған. Эксперимент нәтижелерін экспорттау, стимулдарды қосу/өңдеу және глоссаларды тексеру үшін құпия кілтті енгізіңіз немесе рөлді ауыстырыңыз.'
-              : 'This section contains sensitive stimuli manipulation and experiment records. Please enter the passcode to switch to Researcher role.'}
-          </p>
-        </div>
-
-        <form onSubmit={handleAdminUnlock} className="space-y-3 max-w-sm mx-auto text-left">
-          <div>
-            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-              {lang === 'kk' ? 'Зерттеуші коды (linguo2026)' : 'Researcher Code (linguo2026)'}
-            </label>
-            <input
-              type="password"
-              value={adminPasscode}
-              onChange={(e) => setAdminPasscode(e.target.value)}
-              placeholder="••••••••"
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:border-emerald-600"
-            />
-            {passcodeError && (
-              <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium mt-1">{passcodeError}</p>
-            )}
-          </div>
-          <button
-            type="submit"
-            className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Unlock className="w-4 h-4" />
-            <span>{lang === 'kk' ? 'Ғалым ретінде ашу' : lang === 'ru' ? 'Войти как Ученый' : 'Unlock Scientist View'}</span>
-          </button>
-        </form>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-16">

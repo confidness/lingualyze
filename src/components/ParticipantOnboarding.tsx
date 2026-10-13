@@ -20,6 +20,7 @@ interface ParticipantOnboardingProps {
   currentParticipant: ParticipantProfile;
   setCurrentParticipant: (p: ParticipantProfile) => void;
   lang: LanguageCode;
+  isResearcher?: boolean;
   onProceedToExperiment: () => void;
 }
 
@@ -27,6 +28,7 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
   currentParticipant,
   setCurrentParticipant,
   lang,
+  isResearcher = false,
   onProceedToExperiment
 }) => {
   const t = translations[lang];
@@ -179,7 +181,8 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
           </p>
         </div>
 
-        {/* Quick Presets for Demo */}
+        {/* Quick Presets for Demo (researchers only: they are fake students) */}
+        {isResearcher && (
         <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
           <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
             {t.studentPresetLabel}
@@ -203,6 +206,7 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
             ))}
           </div>
         </div>
+        )}
       </div>
 
       {/* Main Student Registration Form */}
@@ -217,12 +221,14 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
                 <span>{lang === 'kk' ? 'Оқушының негізгі деректері' : lang === 'ru' ? 'Основные данные учащегося' : 'Student Information'}</span>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {lang === 'kk' ? 'Барлық сынақ нәтижелері осы деректермен сақталады' : lang === 'ru' ? 'Результаты тестов будут привязаны к этим данным' : 'All assessment telemetry will be recorded under these credentials'}
+                {lang === 'kk' ? 'Барлық сынақ нәтижелері осы деректермен сақталады' : lang === 'ru' ? 'Результаты тестов будут привязаны к этим данным' : 'Your results will be saved under this name'}
               </p>
             </div>
-            <span className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold">
-              ID: {profile.id}
-            </span>
+            {isResearcher && (
+              <span className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold">
+                ID: {profile.id}
+              </span>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -343,70 +349,58 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
           <div className="flex items-center justify-between">
             <label className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <Globe2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>{t.languageGroup}</span>
+              <span>
+                {isResearcher
+                  ? t.languageGroup
+                  : lang === 'kk' ? 'Қазақ тілін қаншалықты жиі қолданасыз?' : lang === 'ru' ? 'Как часто вы говорите по-казахски?' : 'How much do you use Kazakh?'}
+              </span>
             </label>
-            <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">Research Factor</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            
-            {/* Option A: Kazakh Native */}
-            <div
-              id="cohort-option-kazakh"
-              onClick={() => setProfile({ ...profile, dominanceGroup: 'kazakh_dominant' })}
-              className={`p-4 rounded-2xl border cursor-pointer transition-all ${
-                profile.dominanceGroup === 'kazakh_dominant'
-                  ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
-                  : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/50 dark:hover:bg-slate-800'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 uppercase">L1 Native</span>
-                {profile.dominanceGroup === 'kazakh_dominant' && (
-                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 stroke-[2.5]" />
-                )}
-              </div>
-              <h4 className="mt-2 text-xs font-bold text-slate-900 dark:text-slate-100">{t.groupKazakhDominant}</h4>
-            </div>
-
-            {/* Option B: Balanced Bilingual */}
-            <div
-              id="cohort-option-bilingual"
-              onClick={() => setProfile({ ...profile, dominanceGroup: 'bilingual_balanced' })}
-              className={`p-4 rounded-2xl border cursor-pointer transition-all ${
-                profile.dominanceGroup === 'bilingual_balanced'
-                  ? 'bg-teal-50/70 dark:bg-teal-950/40 border-teal-500 ring-2 ring-teal-500/20 shadow-xs'
-                  : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/50 dark:hover:bg-slate-800'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold text-teal-700 dark:text-teal-400 uppercase">Bilingual</span>
-                {profile.dominanceGroup === 'bilingual_balanced' && (
-                  <Check className="w-4 h-4 text-teal-600 dark:text-teal-400 stroke-[2.5]" />
-                )}
-              </div>
-              <h4 className="mt-2 text-xs font-bold text-slate-900 dark:text-slate-100">{t.groupBilingual}</h4>
-            </div>
-
-            {/* Option C: L2 Learner */}
-            <div
-              id="cohort-option-l2"
-              onClick={() => setProfile({ ...profile, dominanceGroup: 'kazakh_l2' })}
-              className={`p-4 rounded-2xl border cursor-pointer transition-all ${
-                profile.dominanceGroup === 'kazakh_l2'
-                  ? 'bg-amber-50/70 dark:bg-amber-950/40 border-amber-500 ring-2 ring-amber-500/20 shadow-xs'
-                  : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/50 dark:hover:bg-slate-800'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold text-amber-700 dark:text-amber-400 uppercase">L2 Learner</span>
-                {profile.dominanceGroup === 'kazakh_l2' && (
-                  <Check className="w-4 h-4 text-amber-600 dark:text-amber-400 stroke-[2.5]" />
-                )}
-              </div>
-              <h4 className="mt-2 text-xs font-bold text-slate-900 dark:text-slate-100">{t.groupL2}</h4>
-            </div>
-
+            {([
+              {
+                id: 'kazakh_dominant', domId: 'cohort-option-kazakh', tag: 'L1 Native', full: t.groupKazakhDominant,
+                plain: lang === 'kk' ? 'Негізінен қазақша сөйлеймін' : lang === 'ru' ? 'В основном говорю по-казахски' : 'I mostly speak Kazakh',
+                on: 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20', ink: 'text-emerald-600 dark:text-emerald-400'
+              },
+              {
+                id: 'bilingual_balanced', domId: 'cohort-option-bilingual', tag: 'Bilingual', full: t.groupBilingual,
+                plain: lang === 'kk' ? 'Қазақша және орысша бірдей' : lang === 'ru' ? 'Одинаково по-казахски и по-русски' : 'Kazakh and Russian equally',
+                on: 'bg-teal-50/70 dark:bg-teal-950/40 border-teal-500 ring-2 ring-teal-500/20', ink: 'text-teal-600 dark:text-teal-400'
+              },
+              {
+                id: 'kazakh_l2', domId: 'cohort-option-l2', tag: 'L2 Learner', full: t.groupL2,
+                plain: lang === 'kk' ? 'Қазақ тілін үйреніп жүрмін' : lang === 'ru' ? 'Я изучаю казахский язык' : "I'm learning Kazakh",
+                on: 'bg-amber-50/70 dark:bg-amber-950/40 border-amber-500 ring-2 ring-amber-500/20', ink: 'text-amber-600 dark:text-amber-400'
+              },
+            ] as const).map(opt => {
+              const selected = profile.dominanceGroup === opt.id;
+              return (
+                <button
+                  type="button"
+                  key={opt.id}
+                  id={opt.domId}
+                  aria-pressed={selected}
+                  onClick={() => setProfile({ ...profile, dominanceGroup: opt.id as LanguageDominanceGroup })}
+                  className={`p-4 rounded-2xl border text-left cursor-pointer transition-all ${
+                    selected
+                      ? `${opt.on} shadow-xs`
+                      : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/50 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                      {isResearcher ? opt.full : opt.plain}
+                    </span>
+                    {selected && <Check className={`w-4 h-4 shrink-0 stroke-[2.5] ${opt.ink}`} />}
+                  </div>
+                  {isResearcher && (
+                    <span className={`mt-1 block text-[11px] font-mono font-bold uppercase ${opt.ink}`}>{opt.tag}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -419,7 +413,7 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
                 ? 'Оқушы деректері сақталып, әрбір сынақ нәтижесімен байланыстырылады.' 
                 : lang === 'ru'
                 ? 'Данные учащегося сохраняются в сессии и привязываются ко всем ответам.'
-                : 'Student credentials are saved in session and linked to all test telemetry.'}
+                : 'Your details are linked to your answers so you can see your results.'}
             </span>
           </div>
 

@@ -1,343 +1,183 @@
 import React from 'react';
-import { 
-  Play, 
-  BarChart2, 
-  Database, 
-  Brain, 
-  Layers, 
-  Clock, 
-  CheckCircle2, 
-  ArrowRight, 
-  Sparkles,
-  Zap,
-  Users,
-  GitBranch,
-  BookOpen,
-  HelpCircle,
-  Target,
-  GraduationCap,
-  TrendingUp
+import {
+  Play,
+  ArrowRight,
+  UserPlus,
+  BookOpenText,
+  Trophy,
+  MessageSquareText,
+  ListOrdered,
+  SpellCheck,
+  Clock
 } from 'lucide-react';
 import { ActiveTab, LanguageCode, ParticipantProfile, TrialResult } from '../types';
-import { translations } from '../data/translations';
-import { InteractiveSimulator } from './InteractiveSimulator';
+import { skillNames } from './MyResults';
 
 interface OverviewSectionProps {
   setActiveTab: (tab: ActiveTab) => void;
   lang: LanguageCode;
   allTrials?: TrialResult[];
   currentParticipant?: ParticipantProfile;
-  totalStimuliCount?: number;
 }
 
-export const OverviewSection: React.FC<OverviewSectionProps> = ({ 
-  setActiveTab, 
+export const OverviewSection: React.FC<OverviewSectionProps> = ({
+  setActiveTab,
   lang,
   allTrials = [],
-  currentParticipant,
-  totalStimuliCount = 8
+  currentParticipant
 }) => {
-  const t = translations[lang];
+  const tr = (kk: string, ru: string, en: string) => (lang === 'kk' ? kk : lang === 'ru' ? ru : en);
 
-  // Dynamic state calculations
-  const participantTrials = currentParticipant 
-    ? allTrials.filter(tr => tr.participantId === currentParticipant.id)
-    : allTrials;
-  
-  const latestTrial = participantTrials.length > 0 
-    ? participantTrials[participantTrials.length - 1] 
-    : (allTrials.length > 0 ? allTrials[allTrials.length - 1] : null);
-
-  const completedTrialsCount = participantTrials.length;
-  const correctTrialsCount = participantTrials.filter(tr => tr.isCorrect).length;
-  const liveAccuracy = completedTrialsCount > 0 
-    ? Math.round((correctTrialsCount / completedTrialsCount) * 100) 
+  const myTrials = currentParticipant
+    ? allTrials.filter(t => t.participantId === currentParticipant.id)
+    : [];
+  const myScore = myTrials.length > 0
+    ? Math.round((myTrials.filter(t => t.isCorrect).length / myTrials.length) * 100)
     : null;
+  const firstName = currentParticipant?.studentName?.split(' ')[0];
 
-  // Localized cohort label
-  const getCohortName = (dominanceGroup?: string) => {
-    if (dominanceGroup === 'kazakh_dominant') return t.groupKazakhDominant;
-    if (dominanceGroup === 'bilingual_balanced') return t.groupBilingual;
-    if (dominanceGroup === 'kazakh_l2') return t.groupL2;
-    return t.groupKazakhDominant;
-  };
+  const steps = [
+    {
+      icon: <UserPlus className="w-5 h-5" />,
+      title: tr('Атыңызды енгізіңіз', 'Введите своё имя', 'Enter your name'),
+      desc: tr('Нәтижеңіз сақталуы үшін бірнеше жолды толтырыңыз.', 'Заполните пару полей, чтобы сохранить результат.', 'Fill in a few fields so your result is saved.'),
+    },
+    {
+      icon: <BookOpenText className="w-5 h-5" />,
+      title: tr('Сөйлемдерді оқыңыз', 'Читайте предложения', 'Read the sentences'),
+      desc: tr('Әр сөйлемнен кейін 3 қысқа сұраққа жауап беріңіз.', 'После каждого предложения ответьте на 3 коротких вопроса.', 'Answer 3 short questions after each sentence.'),
+    },
+    {
+      icon: <Trophy className="w-5 h-5" />,
+      title: tr('Нәтижеңізді көріңіз', 'Узнайте результат', 'See your results'),
+      desc: tr('Қай жерде мықты екеніңізді және нені жаттықтыру керегін білесіз.', 'Узнаете свои сильные стороны и что стоит подтянуть.', 'Find out what you are good at and what to practice.'),
+    },
+  ];
+
+  const skills = [
+    {
+      icon: <MessageSquareText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />,
+      title: skillNames(lang)[0],
+      desc: tr('Сөйлемде кім не істегенін дұрыс түсіндіңіз бе?', 'Поняли ли вы, кто и что сделал в предложении?', 'Did you get who did what in the sentence?'),
+    },
+    {
+      icon: <ListOrdered className="w-5 h-5 text-teal-600 dark:text-teal-400" />,
+      title: skillNames(lang)[1],
+      desc: tr('Сөйлемдегі ойды суреттермен ретімен құрастыра аласыз ба?', 'Сможете ли выстроить картинки в порядке предложения?', 'Can you put the pictures in the order of the sentence?'),
+    },
+    {
+      icon: <SpellCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />,
+      title: skillNames(lang)[2],
+      desc: tr('Бір ғана жалғау мағынаны қалай өзгертетінін байқайсыз ба?', 'Замечаете ли, как одно окончание меняет смысл?', 'Do you notice how one ending changes the meaning?'),
+    },
+  ];
 
   return (
     <div className="space-y-8 pb-16">
-      
-      {/* Hero Section: Clean Academic Light / Dark Theme */}
+
+      {/* Hero */}
       <section className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-12 shadow-sm">
-        {/* Subtle academic background decoration */}
         <div className="absolute top-0 right-0 -mr-24 -mt-24 w-96 h-96 rounded-full bg-emerald-50/60 dark:bg-emerald-950/20 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -ml-24 -mb-24 w-96 h-96 rounded-full bg-teal-50/50 dark:bg-teal-950/20 blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 max-w-4xl">
-          {/* Scientific Academic Tag */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-emerald-700 dark:text-emerald-400 text-xs font-semibold mb-5 shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>{t.heroTagline}</span>
+        <div className="relative z-10 max-w-3xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-semibold mb-5">
+            <Clock className="w-3.5 h-3.5" />
+            <span>{tr('Тегін • шамамен 10 минут', 'Бесплатно • около 10 минут', 'Free • about 10 minutes')}</span>
           </div>
 
-          {/* Prominent Scientific Objective Banner */}
-          <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 shadow-xs">
-            <div className="flex items-start gap-3.5">
-              <div className="p-2.5 rounded-xl bg-emerald-600 text-white shrink-0 mt-0.5 shadow-xs">
-                <Target className="w-5 h-5" />
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 font-mono">
-                    {lang === 'kk' ? 'Ғылыми мақсат & Зерттеу гипотезасы' : lang === 'ru' ? 'Научная цель & Исследовательская гипотеза' : 'Scientific Objective & Research Hypothesis'}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-300 font-mono">
-                    Behavioral Psycholinguistics
-                  </span>
-                </div>
-                <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-100 leading-snug">
-                  {t.scientificObjectiveBanner}
-                </p>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  {lang === 'kk'
-                    ? 'Академиялық нақтылық: Lingualyze инвазивті нейробейнелеуді (ЭЭГ/фМРТ) емес, нақты мінез-құлықтық психолингвистикалық көрсеткіштерді (өзіндік оқу латенттілігі, шешім қабылдау кідірісі, тапсырма дәлдігі) өлшейді.'
-                    : lang === 'ru'
-                    ? 'Академическая строгость: Lingualyze замеряет объективные поведенческие психолингвистические метрики (латентность чтения, задержка реакции, точность ответа), а НЕ прямую нейровизуализацию (ЭЭГ/фМРТ).'
-                    : 'Academic Rigor: Lingualyze measures objective behavioral psycholinguistic speech processing metrics (reading latencies, response delay, task accuracy), NOT direct neuroimaging (EEG/fMRI).'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Title strictly in selected language */}
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
-            {t.heroTitle}
+            {firstName
+              ? tr(`Сәлем, ${firstName}!`, `Привет, ${firstName}!`, `Hi, ${firstName}!`)
+              : tr('Қазақша қаншалықты жақсы оқисыз?', 'Насколько хорошо вы читаете по-казахски?', 'How well do you read Kazakh?')}
           </h1>
 
-          {/* Subtitle description strictly in selected language */}
           <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-            {t.heroDescription}
+            {tr(
+              'Қысқа сөйлемдерді оқып, қарапайым сұрақтарға жауап беріңіз. Соңында нәтижеңізді және жеке кеңестерді аласыз.',
+              'Прочитайте короткие предложения и ответьте на простые вопросы. В конце вы получите свой результат и советы.',
+              'Read short sentences and answer simple questions. At the end you get your score and personal tips.'
+            )}
           </p>
 
-          {/* Action Button Group */}
-          <div className="mt-8 flex flex-wrap items-center gap-3.5">
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <button
               id="hero-start-experiment-btn"
-              onClick={() => setActiveTab('participant')}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+              onClick={() => setActiveTab('experiment')}
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
             >
               <Play className="w-4 h-4 fill-white" />
-              <span>{t.startExperiment}</span>
+              <span>{myTrials.length > 0 ? tr('Тестті қайта тапсыру', 'Пройти тест снова', 'Take the test again') : tr('Тестті бастау', 'Начать тест', 'Start the test')}</span>
             </button>
 
-            <button
-              id="hero-methodology-btn"
-              onClick={() => setActiveTab('methodology')}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 font-bold text-sm shadow-xs transition-all cursor-pointer"
-            >
-              <BookOpen className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
-              <span>{lang === 'kk' ? 'Әдіснама және гипотезалар' : lang === 'ru' ? 'Методология и гипотезы' : 'Methodology & Hypotheses'}</span>
-            </button>
-
-            <button
-              id="hero-student-login-btn"
-              onClick={() => setActiveTab('participant')}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 font-bold text-sm shadow-xs transition-all cursor-pointer"
-            >
-              <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>{t.navParticipant}</span>
-            </button>
-
-            <button
-              id="hero-view-analytics-btn"
-              onClick={() => setActiveTab('analytics')}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-sm shadow-xs transition-all cursor-pointer"
-            >
-              <BarChart2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-              <span>{t.analyticsDashboard}</span>
-            </button>
-
-            <button
-              id="hero-admin-btn"
-              onClick={() => setActiveTab('admin')}
-              className="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium text-xs shadow-xs transition-all cursor-pointer"
-            >
-              <span>{t.navAdmin}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Linear Narrative Flow: [Research Problem: Word Order Flexibility (SOV vs OSV)] -> [Experimental Protocol] -> [Measured Behavioral Metrics] -> [Scientific Output] */}
-        <div className="mt-10 pt-8 border-t border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-300 font-mono flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>{lang === 'kk' ? 'Ғылыми зерттеудің бірізді архитектурасы' : lang === 'ru' ? 'Линейная структура научного исследования' : 'Linear Research Narrative Flow'}</span>
-            </h3>
-            <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-semibold">4-Stage Pipeline</span>
+            {myTrials.length > 0 && (
+              <button
+                onClick={() => setActiveTab('results')}
+                className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-sm transition-all cursor-pointer"
+              >
+                <Trophy className="w-4 h-4 text-amber-500" />
+                <span>{tr('Менің нәтижелерім', 'Мои результаты', 'My results')}</span>
+              </button>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Step 1: Research Problem */}
-            <div className="p-4 rounded-2xl bg-slate-50/90 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 flex flex-col justify-between hover:border-emerald-300 dark:hover:border-emerald-700 transition-all">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-mono text-[10px] font-bold">
-                    01 • {t.narrativeStep1Title}
-                  </span>
-                  <GitBranch className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {t.narrativeStep1Subtitle}
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">
-                  {t.narrativeStep1Desc}
-                </p>
-              </div>
-              <div className="mt-3 pt-2.5 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 font-mono">
-                <span>SOV vs OSV</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </div>
-            </div>
-
-            {/* Step 2: Experimental Protocol */}
-            <div className="p-4 rounded-2xl bg-slate-50/90 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 flex flex-col justify-between hover:border-teal-300 dark:hover:border-teal-700 transition-all">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="px-2 py-0.5 rounded-md bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 font-mono text-[10px] font-bold">
-                    02 • {t.narrativeStep2Title}
-                  </span>
-                  <Layers className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                </div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {t.narrativeStep2Subtitle}
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">
-                  {t.narrativeStep2Desc}
-                </p>
-              </div>
-              <div className="mt-3 pt-2.5 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-[11px] font-semibold text-teal-700 dark:text-teal-400 font-mono">
-                <span>SPR + 3-Stage Tasks</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </div>
-            </div>
-
-            {/* Step 3: Measured Behavioral Metrics */}
-            <div className="p-4 rounded-2xl bg-slate-50/90 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 flex flex-col justify-between hover:border-indigo-300 dark:hover:border-indigo-700 transition-all">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 font-mono text-[10px] font-bold">
-                    03 • {t.narrativeStep3Title}
-                  </span>
-                  <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                </div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {t.narrativeStep3Subtitle}
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">
-                  {t.narrativeStep3Desc}
-                </p>
-              </div>
-              <div className="mt-3 pt-2.5 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-[11px] font-semibold text-indigo-700 dark:text-indigo-400 font-mono">
-                <span>Latency ms & Acc %</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </div>
-            </div>
-
-            {/* Step 4: Scientific Output */}
-            <div className="p-4 rounded-2xl bg-slate-50/90 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 flex flex-col justify-between hover:border-amber-300 dark:hover:border-amber-700 transition-all">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-mono text-[10px] font-bold">
-                    04 • {t.narrativeStep4Title}
-                  </span>
-                  <TrendingUp className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                </div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {t.narrativeStep4Subtitle}
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">
-                  {t.narrativeStep4Desc}
-                </p>
-              </div>
-              <div className="mt-3 pt-2.5 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-[11px] font-semibold text-amber-700 dark:text-amber-400 font-mono">
-                <span>L1 / Bilingual / L2</span>
-                <CheckCircle2 className="w-3.5 h-3.5" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Dynamic React State Metric Cards (Replaces static hardcoded data) */}
-        <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          {/* Live Metric 1: Reaction Time Engine */}
-          <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 transition-all hover:border-emerald-300 dark:hover:border-emerald-700">
-            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
-              <span>{t.metricLatestRt}</span>
-              <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
-              {latestTrial ? `${latestTrial.readingTimeMs} ms` : '—'}
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {latestTrial 
-                ? `${t.wordOrder}: ${latestTrial.wordOrder} • ${latestTrial.readingSpeedWpm} WPM` 
-                : t.runTestToMeasure}
+          {/* Last result teaser for returning visitors */}
+          {myScore !== null && (
+            <p className="mt-5 text-sm text-slate-600 dark:text-slate-300">
+              {tr(
+                `Соңғы нәтижеңіз: ${myTrials.length} сөйлемнің ${myScore}%-ы дұрыс.`,
+                `Ваш результат: ${myScore}% верных ответов из ${myTrials.length} предложений.`,
+                `Your result so far: ${myScore}% correct across ${myTrials.length} sentences.`
+              )}
             </p>
-          </div>
-
-          {/* Live Metric 2: Active Participant Cohort */}
-          <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 transition-all hover:border-teal-300 dark:hover:border-teal-700">
-            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
-              <span>{t.metricActiveCohort}</span>
-              <Users className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-            </div>
-            <div className="mt-2 text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100 truncate">
-              {currentParticipant ? currentParticipant.id : 'P-KZ-101'}
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
-              {currentParticipant 
-                ? getCohortName(currentParticipant.dominanceGroup) 
-                : t.groupKazakhDominant}
-            </p>
-          </div>
-
-          {/* Live Metric 3: Completed Trials */}
-          <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 transition-all hover:border-emerald-300 dark:hover:border-emerald-700">
-            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
-              <span>{t.metricCompletedTrials}</span>
-              <GitBranch className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
-              {completedTrialsCount} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">/ {totalStimuliCount}</span>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {completedTrialsCount > 0 
-                ? `${Math.round((completedTrialsCount / totalStimuliCount) * 100)}% ${lang === 'kk' ? 'аяқталды' : lang === 'ru' ? 'пройдено' : 'completed'}` 
-                : t.noTrialsYet}
-            </p>
-          </div>
-
-          {/* Live Metric 4: Comprehension Accuracy */}
-          <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 transition-all hover:border-teal-300 dark:hover:border-teal-700">
-            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
-              <span>{t.metricLiveAccuracy}</span>
-              <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-            </div>
-            <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
-              {liveAccuracy !== null ? `${liveAccuracy}%` : '—'}
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {liveAccuracy !== null 
-                ? `${correctTrialsCount} / ${completedTrialsCount} ${lang === 'kk' ? 'дұрыс жауап' : lang === 'ru' ? 'верных ответов' : 'correct responses'}` 
-                : t.metricLiveAccuracyDesc}
-            </p>
-          </div>
-
+          )}
         </div>
       </section>
 
-      {/* Interactive Word Order Parser Demo Section: Dynamic Database Rotation */}
-      <InteractiveSimulator setActiveTab={setActiveTab} lang={lang} />
+      {/* How it works */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+          {tr('Бұл қалай жұмыс істейді', 'Как это работает', 'How it works')}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {steps.map((s, i) => (
+            <div key={i} className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+              <div className="flex items-center gap-3">
+                <span className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                  {s.icon}
+                </span>
+                <span className="text-xs font-bold text-slate-400 dark:text-slate-500">{i + 1}</span>
+              </div>
+              <h3 className="mt-3 text-sm font-bold text-slate-900 dark:text-slate-100">{s.title}</h3>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* What the test checks */}
+      <section className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+          {tr('Тест нені тексереді', 'Что проверяет тест', 'What the test checks')}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {skills.map((s, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <span className="mt-0.5 shrink-0">{s.icon}</span>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{s.title}</h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => setActiveTab('experiment')}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
+        >
+          <span>{tr('Өзіңізді тексеріңіз', 'Проверьте себя', 'Try it yourself')}</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </section>
 
     </div>
   );

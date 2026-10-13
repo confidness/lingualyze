@@ -22,6 +22,31 @@ export function calculateCognitiveLoad(
   return Math.max(8, Math.min(96, Math.round(rawScore * 10) / 10));
 }
 
+// Two-tailed t critical values (α = .05) for df 1..30; normal approximation beyond
+const T_CRIT_95 = [12.71, 4.30, 3.18, 2.78, 2.57, 2.45, 2.36, 2.31, 2.26, 2.23, 2.20, 2.18, 2.16, 2.14, 2.13, 2.12, 2.11, 2.10, 2.09, 2.09, 2.08, 2.07, 2.07, 2.06, 2.06, 2.06, 2.05, 2.05, 2.05, 2.04];
+
+export interface Summary {
+  n: number;
+  mean: number;
+  sd: number;
+  se: number;
+  ci95: number; // half-width of the 95% CI around the mean
+  median: number;
+}
+
+// Descriptives computed from real values only (no baseline fallbacks)
+export function summarize(values: number[]): Summary {
+  const n = values.length;
+  if (n === 0) return { n: 0, mean: NaN, sd: NaN, se: NaN, ci95: NaN, median: NaN };
+  const mean = values.reduce((a, b) => a + b, 0) / n;
+  const sd = n > 1 ? Math.sqrt(values.reduce((a, v) => a + (v - mean) ** 2, 0) / (n - 1)) : 0;
+  const se = sd / Math.sqrt(n);
+  const sorted = [...values].sort((a, b) => a - b);
+  const median = n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+  const ci95 = n > 1 ? (T_CRIT_95[n - 2] ?? 1.96) * se : NaN;
+  return { n, mean, sd, se, ci95, median };
+}
+
 export function calculateWpm(wordCount: number, readingTimeMs: number): number {
   if (readingTimeMs <= 0) return 0;
   const minutes = readingTimeMs / 60000;

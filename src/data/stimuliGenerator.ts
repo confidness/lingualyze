@@ -455,9 +455,9 @@ export function generateExpandedStimuliBattery(): StimulusSentence[] {
       syntacticFocus: `${order} реті (${order === 'SOV' ? 'Канондық' : order === 'OSV' ? 'Топикальды' : order === 'SVO' ? 'Байланысты' : 'Фокусталған'}) • ${cefr} деңгейі`,
       question: {
         questionText: {
-          kk: `Осы ${order} құрылымды сөйлемде негізгі әрекетті кім орындады?`,
-          ru: `Кто совершил главное действие в этом предложении структуры ${order}?`,
-          en: `Who performed the main action in this ${order} structure?`
+          kk: 'Осы сөйлемде негізгі әрекетті кім орындады?',
+          ru: 'Кто совершил главное действие в этом предложении?',
+          en: 'Who performed the main action in this sentence?'
         },
         options: [
           { id: 'opt-a', textKk: tmpl.subject, textRu: tmpl.subjEmoji.labelRu, textEn: tmpl.subjEmoji.labelEn },

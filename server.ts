@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
+import { isResearcherPasscode } from "./api/auth/login";
 
 // Centralized in-memory store for research records with benchmark seeds
 interface StoredTestRecord {
@@ -202,10 +203,7 @@ async function startServer() {
 
   // 2. Authentication route
   app.post("/api/auth/login", (req, res) => {
-    const { passcode } = req.body || {};
-    const cleaned = (passcode || "").trim();
-
-    if (cleaned === "23032011" || cleaned === "admin123") {
+    if (isResearcherPasscode(req.body?.passcode)) {
       res.json({
         success: true,
         role: "researcher",

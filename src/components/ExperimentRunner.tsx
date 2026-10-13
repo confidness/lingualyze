@@ -41,16 +41,20 @@ import {
   getAllStimuli, 
   shuffleArray 
 } from '../utils/stimulusManager';
+import { skillNames } from './MyResults';
 
 interface ExperimentRunnerProps {
   stimuli: StimulusSentence[];
   currentParticipant: ParticipantProfile;
   lang: LanguageCode;
   soundEnabled: boolean;
+  isResearcher?: boolean;
   onTrialComplete: (trial: TrialResult) => void;
   onSessionComplete: (trials: TrialResult[]) => void;
   setActiveTab: (tab: ActiveTab) => void;
 }
+
+const seconds = (ms: number) => (ms / 1000).toFixed(1);
 
 type ExperimentPhase = 
   | 'idle' 
@@ -67,6 +71,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
   currentParticipant,
   lang,
   soundEnabled,
+  isResearcher = false,
   onTrialComplete,
   onSessionComplete,
   setActiveTab,
@@ -391,6 +396,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
       trialId: `trial-${Date.now()}-${currentStimulusIndex}`,
       stimulusId: currentStimulus.id,
       participantId: currentParticipant.id,
+      dominanceGroup: currentParticipant.dominanceGroup,
       cefrLevel: currentStimulus.cefrLevel,
       currentPart: 'suffix_contrast',
       part1Correct: p1Corr,
@@ -515,11 +521,13 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
               ? 'Қазақ тілін 3 бөлімді тестілеу платформасы'
               : lang === 'ru'
               ? '3-уровневое тестирование казахского языка'
-              : '3-Part Kazakh Psycholinguistic Battery'}
+              : 'Kazakh reading test'}
           </h2>
           <div className="flex items-center gap-2 mt-1">
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t.participantId}: <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">{currentParticipant.id}</span>
+              {isResearcher
+                ? <>{t.participantId}: <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">{currentParticipant.id}</span></>
+                : <span className="font-semibold text-slate-700 dark:text-slate-200">{currentParticipant.studentName}</span>}
             </p>
             <button
               onClick={() => setActiveTab('participant')}
@@ -532,7 +540,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
 
         {/* Presentation Paradigm & Controls */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {phase === 'idle' && (
+          {phase === 'idle' && isResearcher && (
             <div className="flex bg-slate-100/90 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs shadow-inner">
               <button
                 type="button"
@@ -580,6 +588,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
               <span>{t.selectLevelPrompt || 'Қазақ тілін меңгеру деңгейін таңдаңыз:'}</span>
             </label>
             
+            {isResearcher && (
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-800">
                 {sessionQueue.length} {lang === 'kk' ? 'қайталанбайтын сөйлем' : lang === 'ru' ? 'неповторяющихся стимулов' : 'unique stimuli in queue'}
@@ -594,6 +603,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
                 <span>{lang === 'kk' ? 'Араластыру' : lang === 'ru' ? 'Перемешать' : 'Reshuffle'}</span>
               </button>
             </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 pt-1">
@@ -621,10 +631,10 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2">
               <span className="text-slate-500 dark:text-slate-400 font-medium">
-                {lang === 'kk' ? 'Сессия ұзақтығы:' : lang === 'ru' ? 'Длина сессии:' : 'Session length:'}
+                {lang === 'kk' ? 'Сөйлем саны:' : lang === 'ru' ? 'Количество предложений:' : 'Number of sentences:'}
               </span>
               <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 p-0.5">
-                {([6, 12, 24, 'ALL'] as const).map((len) => (
+                {(isResearcher ? [6, 12, 24, 'ALL'] as const : [6, 12, 24] as const).map((len) => (
                   <button
                     key={len}
                     onClick={() => setSessionLength(len)}
@@ -634,15 +644,22 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
                         : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
-                    {len === 'ALL' ? (lang === 'kk' ? 'Барлығы' : lang === 'ru' ? 'Все' : 'All') : `${len} ${lang === 'kk' ? 'сынақ' : lang === 'ru' ? 'проб' : 'trials'}`}
+                    {len === 'ALL' ? (lang === 'kk' ? 'Барлығы' : lang === 'ru' ? 'Все' : 'All') : `${len}`}
                   </button>
                 ))}
               </div>
+              {!isResearcher && (
+                <span className="text-slate-400 dark:text-slate-500">
+                  ≈ {Math.ceil((typeof sessionLength === 'number' ? sessionLength : 12) * 0.75)} {lang === 'kk' ? 'мин' : lang === 'ru' ? 'мин' : 'min'}
+                </span>
+              )}
             </div>
 
-            <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-300 bg-emerald-50/70 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/60">
-              ✓ {lang === 'kk' ? '0% қайталану: Fisher-Yates алгоритмі арқылы динамикалық іріктеу' : lang === 'ru' ? '0% повторов: динамическая выборка Fisher-Yates' : 'Zero-repetition: dynamic Fisher-Yates queue'}
-            </span>
+            {isResearcher && (
+              <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-300 bg-emerald-50/70 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/60">
+                ✓ {lang === 'kk' ? '0% қайталану: Fisher-Yates алгоритмі арқылы динамикалық іріктеу' : lang === 'ru' ? '0% повторов: динамическая выборка Fisher-Yates' : 'Zero-repetition: dynamic Fisher-Yates queue'}
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -680,7 +697,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
                 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-400 dark:border-emerald-700 shadow-xs'
                 : part1Result ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700'
             }`}>
-              1. {lang === 'kk' ? 'Сөз тізбегі' : lang === 'ru' ? 'Цепочка слов' : 'Word Chain'}
+              1. {skillNames(lang)[0]}
             </span>
             <span className="text-slate-300 dark:text-slate-600">›</span>
             <span className={`px-2.5 py-1 rounded-xl border text-[11px] font-bold transition-all ${
@@ -688,7 +705,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
                 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-400 dark:border-emerald-700 shadow-xs'
                 : part2Result ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700'
             }`}>
-              2. {lang === 'kk' ? 'Эмодзи реті' : lang === 'ru' ? 'Эмодзи' : 'Emoji Order'}
+              2. {skillNames(lang)[1]}
             </span>
             <span className="text-slate-300 dark:text-slate-600">›</span>
             <span className={`px-2.5 py-1 rounded-xl border text-[11px] font-bold transition-all ${
@@ -696,7 +713,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
                 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-400 dark:border-emerald-700 shadow-xs'
                 : part3Result ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700'
             }`}>
-              3. {lang === 'kk' ? 'Сөйлем таңдау' : lang === 'ru' ? 'Выбор варианта' : 'Sentence Choice'}
+              3. {skillNames(lang)[2]}
             </span>
           </div>
         </div>
@@ -744,7 +761,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-[0_4px_0_#047857] active:translate-y-1 active:shadow-none transition-all cursor-pointer"
               >
                 <Play className="w-4 h-4 fill-white" />
-                <span>{t.startExperiment} ({totalTrials} {lang === 'kk' ? 'стимул' : lang === 'ru' ? 'стимулов' : 'stimuli'})</span>
+                <span>{t.startExperiment} ({totalTrials} {lang === 'kk' ? 'сөйлем' : lang === 'ru' ? 'предложений' : 'sentences'})</span>
               </button>
             </div>
 
@@ -879,7 +896,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
 
             <div>
               <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 leading-snug">
-                {t.wordChainPrompt}
+                {currentStimulus.question.questionText[lang] || t.wordChainPrompt}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 {t.part1Desc}
@@ -1027,7 +1044,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-[0_3px_0_#047857] active:translate-y-0.5 active:shadow-none disabled:opacity-40 transition-all cursor-pointer"
               >
                 <Check className="w-4 h-4" />
-                <span>{t.btnCheckOrder} (3-бөлімге өту)</span>
+                <span>{t.btnCheckOrder}</span>
               </button>
             </div>
           </div>
@@ -1131,34 +1148,29 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
                   {lastTrial.isCorrect ? t.correct : t.incorrect}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {t.wordOrder}: <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">{lastTrial.wordOrder}</span> • {t.cefrLevel}: <span className="font-bold">{lastTrial.cefrLevel}</span>
+                  {isResearcher && <>{t.wordOrder}: <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">{lastTrial.wordOrder}</span> • </>}
+                  {lang === 'kk' ? 'Деңгей' : lang === 'ru' ? 'Уровень' : 'Level'}: <span className="font-bold">{lastTrial.cefrLevel}</span>
                 </p>
               </div>
             </div>
 
             {/* 3-Part Results Checklist */}
-            <div className="grid grid-cols-3 gap-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-mono">
-              <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-xs">
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 block uppercase font-bold">1. {lang === 'kk' ? 'Сөз тізбегі' : 'Word Chain'}</span>
-                <span className={`text-sm font-bold flex items-center gap-1 mt-0.5 ${lastTrial.part1Correct ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                  {lastTrial.part1Correct ? '✓ Дұрыс' : '✕ Қате'}
-                </span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block">{lastTrial.part1RtMs} ms</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-xs">
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 block uppercase font-bold">2. {lang === 'kk' ? 'Эмодзи' : 'Emoji Order'}</span>
-                <span className={`text-sm font-bold flex items-center gap-1 mt-0.5 ${lastTrial.part2Correct ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                  {lastTrial.part2Correct ? '✓ Дұрыс' : '✕ Қате'}
-                </span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block">{lastTrial.part2RtMs} ms</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-xs">
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 block uppercase font-bold">3. {lang === 'kk' ? 'Жалғаулар' : 'Suffixes'}</span>
-                <span className={`text-sm font-bold flex items-center gap-1 mt-0.5 ${lastTrial.part3Correct ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                  {lastTrial.part3Correct ? '✓ Дұрыс' : '✕ Қате'}
-                </span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block">{lastTrial.part3RtMs} ms</span>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs">
+              {[
+                [lastTrial.part1Correct, lastTrial.part1RtMs],
+                [lastTrial.part2Correct, lastTrial.part2RtMs],
+                [lastTrial.part3Correct, lastTrial.part3RtMs],
+              ].map(([ok, rt], i) => (
+                <div key={i} className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-xs">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-semibold">{i + 1}. {skillNames(lang)[i]}</span>
+                  <span className={`text-sm font-bold flex items-center gap-1 mt-0.5 ${ok ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                    {ok
+                      ? `✓ ${lang === 'kk' ? 'Дұрыс' : lang === 'ru' ? 'Верно' : 'Correct'}`
+                      : `✕ ${lang === 'kk' ? 'Қате' : lang === 'ru' ? 'Ошибка' : 'Wrong'}`}
+                  </span>
+                  {isResearcher && <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 block">{rt} ms</span>}
+                </div>
+              ))}
             </div>
 
             {/* Suffix Linguistic Explanation */}
@@ -1176,8 +1188,10 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                {t.readingSpeedMs}: <strong className="text-slate-900 dark:text-slate-100">{lastTrial.readingTimeMs} ms</strong> ({lastTrial.readingSpeedWpm} WPM)
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {isResearcher
+                  ? <span className="font-mono">{t.readingSpeedMs}: <strong className="text-slate-900 dark:text-slate-100">{lastTrial.readingTimeMs} ms</strong> ({lastTrial.readingSpeedWpm} WPM)</span>
+                  : <>{t.readingSpeedMs}: <strong className="text-slate-900 dark:text-slate-100">{seconds(lastTrial.readingTimeMs)} {lang === 'en' ? 's' : 'сек'}</strong></>}
               </span>
 
               <button
@@ -1211,7 +1225,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
             {/* Quick Session Summary */}
             <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-left font-mono">
               <div>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase">{t.trial}</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase">{lang === 'kk' ? 'Сөйлем' : lang === 'ru' ? 'Предложений' : 'Sentences'}</span>
                 <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{sessionTrials.length}</span>
               </div>
               <div>
@@ -1223,7 +1237,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
               <div>
                 <span className="text-[10px] text-slate-500 dark:text-slate-400 block uppercase">{t.avgReadingSpeed}</span>
                 <span className="text-lg font-bold text-teal-700 dark:text-teal-400">
-                  {Math.round(sessionTrials.reduce((a, b) => a + b.readingTimeMs, 0) / Math.max(1, sessionTrials.length))} ms
+                  {seconds(sessionTrials.reduce((a, b) => a + b.readingTimeMs, 0) / Math.max(1, sessionTrials.length))} {lang === 'en' ? 's' : 'сек'}
                 </span>
               </div>
             </div>
@@ -1231,7 +1245,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <button
                 id="view-analytics-from-session-btn"
-                onClick={() => setActiveTab('analytics')}
+                onClick={() => setActiveTab(isResearcher ? 'analytics' : 'results')}
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-[0_3px_0_#047857] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
               >
                 <BarChart2 className="w-4 h-4" />
@@ -1252,7 +1266,8 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
 
       </div>
 
-      {/* Helper Footer Settings */}
+      {/* Helper Footer Settings (researcher controls) */}
+      {isResearcher && (
       <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-600 dark:text-slate-300 shadow-xs">
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100">
@@ -1270,6 +1285,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
           {lang === 'kk' ? 'Режим' : lang === 'ru' ? 'Режим' : 'Paradigm'}: {presentationMode === 'whole_sentence' ? 'Rapid Visual (RVP)' : 'Moving Window (SPR)'}
         </span>
       </div>
+      )}
 
     </div>
   );

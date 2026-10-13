@@ -1,11 +1,13 @@
 import React from 'react';
-import { 
-  Brain, 
-  Database, 
-  BarChart3, 
-  PlayCircle, 
-  UserCheck, 
-  BookOpen, 
+import {
+  Brain,
+  Database,
+  BarChart3,
+  PlayCircle,
+  UserCheck,
+  BookOpen,
+  Home,
+  Trophy,
   Volume2, 
   VolumeX, 
   Sun, 
@@ -50,55 +52,63 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const t = translations[lang];
 
-  const navItems: { id: ActiveTab; label: string; icon: React.ReactNode; badge?: string }[] = [
-    { 
-      id: 'overview', 
-      label: t.navOverview, 
-      icon: <BookOpen className="w-3.5 h-3.5" /> 
+  const isResearcher = currentRole === 'researcher';
+
+  // Client-facing pages: what every visitor sees
+  const clientItems: { id: ActiveTab; label: string; icon: React.ReactNode; badge?: string }[] = [
+    {
+      id: 'overview',
+      label: lang === 'kk' ? 'Басты бет' : lang === 'ru' ? 'Главная' : 'Home',
+      icon: <Home className="w-3.5 h-3.5" />
     },
-    { 
-      id: 'participant', 
-      label: t.navParticipant, 
-      icon: <UserCheck className="w-3.5 h-3.5" /> 
+    {
+      id: 'experiment',
+      label: lang === 'kk' ? 'Тест тапсыру' : lang === 'ru' ? 'Пройти тест' : 'Take the test',
+      icon: <PlayCircle className="w-3.5 h-3.5" />,
+      badge: 'live'
     },
-    { 
-      id: 'experiment', 
-      label: t.navExperiment, 
-      icon: <PlayCircle className="w-3.5 h-3.5" />, 
-      badge: lang === 'kk' ? 'Тікелей' : lang === 'ru' ? 'Тест' : 'Live' 
+    {
+      id: 'results',
+      label: lang === 'kk' ? 'Менің нәтижелерім' : lang === 'ru' ? 'Мои результаты' : 'My results',
+      icon: <Trophy className="w-3.5 h-3.5" />
     },
-    { 
-      id: 'admin', 
-      label: t.navAdmin, 
-      icon: <ShieldCheck className="w-3.5 h-3.5" />,
-      badge: currentRole === 'researcher' ? 'PRO' : undefined
-    },
-    { 
-      id: 'analytics', 
-      label: t.navAnalytics, 
-      icon: <BarChart3 className="w-3.5 h-3.5" /> 
-    },
-    { 
-      id: 'database', 
-      label: t.navDatabase, 
-      icon: <Database className="w-3.5 h-3.5" /> 
-    },
-    { 
-      id: 'neurolinguistics', 
-      label: t.navNeurolinguistics, 
-      icon: <Brain className="w-3.5 h-3.5" /> 
-    },
-    { 
-      id: 'methodology', 
-      label: lang === 'kk' ? 'Әдістеме' : lang === 'ru' ? 'Методология' : 'Methodology', 
-      icon: <BookOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> 
-    },
-    { 
-      id: 'privacy', 
-      label: t.navPrivacy, 
-      icon: <Shield className="w-3.5 h-3.5" /> 
+    {
+      id: 'privacy',
+      label: lang === 'kk' ? 'Құпиялылық' : lang === 'ru' ? 'Конфиденциальность' : 'Privacy',
+      icon: <Shield className="w-3.5 h-3.5" />
     },
   ];
+
+  // Researcher-only pages, shown after sign-in as a separate group
+  const researchItems: { id: ActiveTab; label: string; icon: React.ReactNode; badge?: string }[] = isResearcher ? [
+    {
+      id: 'analytics',
+      label: t.navAnalytics,
+      icon: <BarChart3 className="w-3.5 h-3.5" />
+    },
+    {
+      id: 'admin',
+      label: t.navAdmin,
+      icon: <ShieldCheck className="w-3.5 h-3.5" />
+    },
+    {
+      id: 'database',
+      label: t.navDatabase,
+      icon: <Database className="w-3.5 h-3.5" />
+    },
+    {
+      id: 'neurolinguistics',
+      label: t.navNeurolinguistics,
+      icon: <Brain className="w-3.5 h-3.5" />
+    },
+    {
+      id: 'methodology',
+      label: lang === 'kk' ? 'Әдістеме' : lang === 'ru' ? 'Методология' : 'Methodology',
+      icon: <BookOpen className="w-3.5 h-3.5" />
+    },
+  ] : [];
+
+  const navItems = [...clientItems, ...researchItems];
 
   const getGroupBadgeColor = () => {
     switch (currentParticipant.dominanceGroup) {
@@ -138,9 +148,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
               Lingualyze
             </span>
-            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800">
-              Lab
-            </span>
+            {isResearcher && (
+              <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800">
+                Lab
+              </span>
+            )}
           </div>
 
           {/* Navigation Categories - Compact and Clean */}
@@ -148,8 +160,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             {navItems.map((item) => {
               const isActive = activeTab === item.id;
               return (
+                <React.Fragment key={item.id}>
+                {item.id === researchItems[0]?.id && (
+                  <span className="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1 shrink-0" aria-hidden />
+                )}
                 <button
-                  key={item.id}
                   id={`nav-btn-${item.id}`}
                   onClick={() => setActiveTab(item.id)}
                   className={`flex items-center gap-1 px-2 lg:px-2.5 py-1 rounded-lg text-xs font-medium transition-all shrink-0 cursor-pointer ${
@@ -164,6 +179,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   )}
                 </button>
+                </React.Fragment>
               );
             })}
           </nav>
@@ -179,15 +195,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               title={t.manageAccountFull || t.changeProfile}
             >
               <UserCheck className="w-3.5 h-3.5 shrink-0" />
-              <span className="font-mono font-bold max-w-[90px] sm:max-w-[120px] truncate">
-                {currentParticipant.studentName 
-                  ? currentParticipant.studentName.split(' ')[0] 
-                  : currentParticipant.id}
+              <span className="font-bold max-w-[90px] sm:max-w-[120px] truncate">
+                {currentParticipant.studentName
+                  ? currentParticipant.studentName.split(' ')[0]
+                  : (lang === 'kk' ? 'Кіру' : lang === 'ru' ? 'Войти' : 'Sign in')}
               </span>
-              <span className="hidden xl:inline text-[10px] opacity-75 font-mono">({getGroupNameShort()})</span>
+              {isResearcher && (
+                <span className="hidden xl:inline text-[10px] opacity-75 font-mono">({getGroupNameShort()})</span>
+              )}
             </button>
 
-            {/* Role & Auth Modal Trigger */}
+            {/* Researcher badge (clients reach researcher sign-in from the footer) */}
+            {isResearcher && (
             <button
               id="nav-auth-btn"
               onClick={onOpenAuthModal}
@@ -207,6 +226,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {currentRole === 'researcher' ? 'PRO' : ((t as any).roleParticipant || 'User')}
               </span>
             </button>
+            )}
 
             {/* Compact Utility Cluster: Theme + Audio + Logout */}
             <div className="flex items-center gap-0.5 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 p-0.5 rounded-lg shrink-0">
