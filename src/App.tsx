@@ -25,9 +25,13 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { AuthModal } from './components/AuthModal';
 import { translations } from './data/translations';
 import { CheckCircle2 } from 'lucide-react';
+import { storageEngine, DB_CHANGE_EVENT, generateUUID } from './utils/storageEngine';
+import { researcherPasscode } from './utils/db';
+import { LogoMark } from './components/Logo';
 
+// Random 8-hex-digit IDs so participants from different devices don't collide in the database
 const newGuestProfile = (): ParticipantProfile => ({
-  id: 'P-KZ-' + Math.floor(100 + Math.random() * 900),
+  id: 'P-' + generateUUID().slice(0, 8).toUpperCase(),
   name: '',
   studentName: '',
   phoneNumber: '',
@@ -38,7 +42,8 @@ const newGuestProfile = (): ParticipantProfile => ({
   dailyKazakhUsagePercent: 80,
   selfRatedReadingProficiency: 4,
   primaryHomeLanguage: 'Kazakh',
-  createdAt: new Date().toISOString()
+  createdAt: new Date().toISOString(),
+  token: generateUUID()
 });
 
 export default function App() {
@@ -66,16 +71,34 @@ export default function App() {
     }
   }, [theme]);
 
-  // RBAC User Role (Participant / Researcher) with persistence
+  // RBAC User Role (Participant / Researcher) with persistence; researcher also needs a stored passcode
   const [currentRole, setCurrentRole] = useState<UserRole>(() => {
     const saved = localStorage.getItem('lingualyze_user_role');
-    if (saved === 'researcher' || saved === 'participant') return saved;
-    return 'participant';
+    return saved === 'researcher' && researcherPasscode.get() ? 'researcher' : 'participant';
   });
 
   useEffect(() => {
     localStorage.setItem('lingualyze_user_role', currentRole);
+    // Leaving the researcher role from any screen drops the passcode and the downloaded research data
+    if (currentRole === 'participant' && researcherPasscode.get()) {
+      researcherPasscode.clear();
+      storageEngine.forgetResearchData();
+    }
   }, [currentRole]);
+
+  // Every participant's trials from the research database (filled for researchers only)
+  const [dbTrials, setDbTrials] = useState<TrialResult[]>([]);
+  useEffect(() => {
+    const load = () => setDbTrials(storageEngine.getAllSessions().flatMap(r => (r.trial ? [r.trial] : [])));
+    load();
+    window.addEventListener(DB_CHANGE_EVENT, load);
+    return () => window.removeEventListener(DB_CHANGE_EVENT, load);
+  }, []);
+
+  const saveProfile = (p: ParticipantProfile) => {
+    setCurrentParticipant(p);
+    storageEngine.saveParticipant(p).catch(err => console.warn('Saving participant failed:', err));
+  };
 
   // Auth & Role Switcher Modal
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -304,7 +327,7 @@ export default function App() {
         {(tab === 'participant' || (tab === 'experiment' && !currentParticipant.studentName)) && (
           <ParticipantOnboarding
             currentParticipant={currentParticipant}
-            setCurrentParticipant={setCurrentParticipant}
+            setCurrentParticipant={saveProfile}
             lang={lang}
             isResearcher={isResearcher}
             onProceedToExperiment={() => setActiveTab('experiment')}
@@ -336,7 +359,7 @@ export default function App() {
 
         {tab === 'analytics' && (
           <AnalyticsDashboard
-            allTrials={allTrials}
+            allTrials={dbTrials.length > 0 ? dbTrials : allTrials}
             lang={lang}
             currentRole={currentRole}
             onOpenAuthModal={() => setIsAuthModalOpen(true)}
@@ -399,7 +422,8 @@ export default function App() {
       <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-8 text-xs text-slate-500 dark:text-slate-400 shadow-xs transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-bold text-slate-900 dark:text-slate-100">Lingualyze</span>
+            <LogoMark className="w-5 h-5" />
+            <span className="font-display font-semibold text-slate-900 dark:text-slate-100">Lingualyze</span>
             <span>•</span>
             <span>
               {lang === 'kk'

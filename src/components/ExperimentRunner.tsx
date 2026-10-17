@@ -440,6 +440,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
       const record: StoredTestRecord = {
         test_id: generateUUID(),
         participant_id: currentParticipant.id,
+        participant_token: currentParticipant.token,
         student_name: currentParticipant.studentName || currentParticipant.name || '',
         phone_number: currentParticipant.phoneNumber || '',
         age: currentParticipant.age,
@@ -451,7 +452,8 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
         accuracy_score: Math.round((correctPartsCount / 3) * 100),
         detailed_responses: [detailedItem],
         cefr_level: currentStimulus.cefrLevel,
-        notes: `CEFR ${currentStimulus.cefrLevel} • 3-Part Accuracy: ${Math.round((correctPartsCount / 3) * 100)}%`
+        notes: `CEFR ${currentStimulus.cefrLevel} • 3-Part Accuracy: ${Math.round((correctPartsCount / 3) * 100)}%`,
+        trial: trialResult
       };
 
       storageEngine.saveSession(record);
@@ -616,7 +618,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
                   onClick={() => setSelectedCefr(lvl.id)}
                   className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center cursor-pointer ${
                     isSelected
-                      ? 'bg-emerald-50/90 dark:bg-emerald-950/70 border-emerald-500 shadow-[0_4px_0_#059669] text-emerald-900 dark:text-emerald-200 font-bold -translate-y-0.5'
+                      ? 'bg-emerald-50/90 dark:bg-emerald-950/70 border-emerald-500 shadow-[0_4px_0_#0C7A9C] text-emerald-900 dark:text-emerald-200 font-bold -translate-y-0.5'
                       : 'bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200/80 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 shadow-xs'
                   }`}
                 >
@@ -725,7 +727,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
         {/* ================= 1. IDLE SCREEN ================= */}
         {phase === 'idle' && (
           <div className="relative z-10 max-w-lg space-y-6">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-[0_4px_12px_rgba(16,185,129,0.12)]">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-[0_4px_12px_rgba(21,147,181,0.12)]">
               <Play className="w-8 h-8 fill-emerald-600 dark:fill-emerald-400 pl-1" />
             </div>
 
@@ -758,7 +760,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
               <button
                 id="start-experiment-runner-btn"
                 onClick={startExperiment}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-[0_4px_0_#047857] active:translate-y-1 active:shadow-none transition-all cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-[0_4px_0_#0B627F] active:translate-y-1 active:shadow-none transition-all cursor-pointer"
               >
                 <Play className="w-4 h-4 fill-white" />
                 <span>{t.startExperiment} ({totalTrials} {lang === 'kk' ? 'сөйлем' : lang === 'ru' ? 'предложений' : 'sentences'})</span>
@@ -856,7 +858,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
                     handleNextWordSelfPaced();
                   }
                 }}
-                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-[0_4px_0_#047857] active:translate-y-1 active:shadow-none transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-[0_4px_0_#0B627F] active:translate-y-1 active:shadow-none transition-all cursor-pointer"
               >
                 <span>
                   {presentationMode === 'whole_sentence' 
@@ -972,7 +974,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
                     <button
                       key={id}
                       onClick={() => handleToggleEmojiSlot(id)}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 text-slate-900 dark:text-slate-100 font-bold shadow-[0_3px_0_#10B981] active:translate-y-0.5 transition-all group cursor-pointer"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 text-slate-900 dark:text-slate-100 font-bold shadow-[0_3px_0_#1593B5] active:translate-y-0.5 transition-all group cursor-pointer"
                       title={lang === 'kk' ? 'Алып тастау үшін басыңыз' : 'Нажмите для удаления'}
                     >
                       <span className="text-xl">{item.emoji}</span>
@@ -1041,7 +1043,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
                 type="button"
                 disabled={arrangedEmojiIds.length !== currentStimulus.emojiChain.items.length}
                 onClick={handleCheckEmojiOrder}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-[0_3px_0_#047857] active:translate-y-0.5 active:shadow-none disabled:opacity-40 transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-[0_3px_0_#0B627F] active:translate-y-0.5 active:shadow-none disabled:opacity-40 transition-all cursor-pointer"
               >
                 <Check className="w-4 h-4" />
                 <span>{t.btnCheckOrder}</span>
@@ -1096,7 +1098,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
                 <button
                   id="choose-sentence-A-btn"
                   onClick={() => handleSelectSuffixSentence('A')}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-50 dark:bg-slate-700/70 hover:bg-emerald-600 dark:hover:bg-emerald-600 hover:text-white border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 font-bold text-xs shadow-[0_3px_0_#CBD5E1] dark:shadow-[0_3px_0_#334155] hover:shadow-[0_3px_0_#047857] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-50 dark:bg-slate-700/70 hover:bg-emerald-600 dark:hover:bg-emerald-600 hover:text-white border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 font-bold text-xs shadow-[0_3px_0_#CBD5E1] dark:shadow-[0_3px_0_#334155] hover:shadow-[0_3px_0_#0B627F] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group"
                 >
                   <span>{t.chooseSentenceA}</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -1119,7 +1121,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
                 <button
                   id="choose-sentence-B-btn"
                   onClick={() => handleSelectSuffixSentence('B')}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-50 dark:bg-slate-700/70 hover:bg-emerald-600 dark:hover:bg-emerald-600 hover:text-white border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 font-bold text-xs shadow-[0_3px_0_#CBD5E1] dark:shadow-[0_3px_0_#334155] hover:shadow-[0_3px_0_#047857] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-50 dark:bg-slate-700/70 hover:bg-emerald-600 dark:hover:bg-emerald-600 hover:text-white border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 font-bold text-xs shadow-[0_3px_0_#CBD5E1] dark:shadow-[0_3px_0_#334155] hover:shadow-[0_3px_0_#0B627F] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer group"
                 >
                   <span>{t.chooseSentenceB}</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -1197,7 +1199,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
               <button
                 id="next-trial-btn"
                 onClick={handleProceedToNextTrial}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-[0_3px_0_#047857] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-[0_3px_0_#0B627F] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
               >
                 <span>{t.nextTrial} (Enter)</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1209,7 +1211,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
         {/* ================= 8. SESSION FINISHED SCREEN ================= */}
         {phase === 'finished' && (
           <div className="relative z-10 max-w-lg space-y-6">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-[0_4px_12px_rgba(16,185,129,0.12)]">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-[0_4px_12px_rgba(21,147,181,0.12)]">
               <Sparkles className="w-8 h-8" />
             </div>
 
@@ -1246,7 +1248,7 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
               <button
                 id="view-analytics-from-session-btn"
                 onClick={() => setActiveTab(isResearcher ? 'analytics' : 'results')}
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-[0_3px_0_#047857] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-[0_3px_0_#0B627F] active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
               >
                 <BarChart2 className="w-4 h-4" />
                 <span>{t.viewResults}</span>

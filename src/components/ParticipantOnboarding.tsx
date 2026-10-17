@@ -253,6 +253,7 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
                 id="student-phone-input"
                 type="tel"
                 autoComplete="tel"
+                maxLength={20}
                 value={profile.phoneNumber || ''}
                 onChange={handlePhoneChange}
                 placeholder={t.placeholderPhoneNumber}
@@ -333,7 +334,7 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
           <button
             type="submit"
             id="start-assessment-btn"
-            className="w-full inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-base shadow-[0_4px_12px_rgba(5,150,105,0.25)] transition-all active:scale-[0.99] cursor-pointer"
+            className="w-full inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-base shadow-[0_4px_12px_rgba(12,122,156,0.25)] transition-all active:scale-[0.99] cursor-pointer"
           >
             {savedSuccess ? (
               <>

@@ -3,9 +3,32 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Both faces cover Kazakh Cyrillic (ә ғ қ ң ө ұ ү һ і) */
+  --font-sans: 'Golos Text', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Unbounded', 'Golos Text', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --font-serif: 'Cinzel', Georgia, serif;
+
+  /* Brand: the app's emerald-* classes are remapped to Lingualyze steppe-sky blue (Kazakh flag blue, darkened for contrast) */
+  --color-emerald-50: #EEF8FB;
+  --color-emerald-100: #D5EEF5;
+  --color-emerald-200: #ABDDEB;
+  --color-emerald-300: #74C5DC;
+  --color-emerald-400: #38A8C6;
+  --color-emerald-500: #1593B5;
+  --color-emerald-600: #0C7A9C;
+  --color-emerald-700: #0B627F;
+  --color-emerald-800: #0D4F66;
+  --color-emerald-900: #0E4255;
+  --color-emerald-950: #072A37;
+
+  /* Tengri gold: the verb tile in the logo and hero, used sparingly */
+  --color-gold: #F2B705;
+}
+
+h1 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
 }
 
 :root {
@@ -15,7 +38,7 @@
   --text-primary: #0F172A;
   --text-body: #475569;
   --text-muted: #64748B;
-  --accent-emerald: #059669;
+  --accent-emerald: #0C7A9C;
   --accent-teal: #0D9488;
 }
 
@@ -26,7 +49,7 @@
   --text-primary: #F8FAFC;
   --text-body: #CBD5E1;
   --text-muted: #94A3B8;
-  --accent-emerald: #10B981;
+  --accent-emerald: #1593B5;
   --accent-teal: #14B8A6;
   color-scheme: dark;
 }

@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { LanguageCode, UserRole } from '../types';
 import { translations } from '../data/translations';
+import { rpc, researcherPasscode } from '../utils/db';
+import { storageEngine } from '../utils/storageEngine';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -51,15 +53,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setErrorMessage('');
     setSuccessMessage('');
 
-    // Passcode is checked server-side so it never ships in the browser bundle
-    const ok = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ passcode: passcode.trim() })
-    }).then(res => res.ok).catch(() => false);
+    // Passcode is checked by the database, so it never ships in the browser bundle
+    const cleaned = passcode.trim();
+    const ok = await rpc<boolean>('is_researcher', { passcode: cleaned }).catch(() => null);
 
-    if (ok) {
+    if (ok === null) {
+      setErrorMessage(
+        lang === 'kk'
+          ? 'Дерекқорға қосылу мүмкін болмады. Кейінірек қайталаңыз.'
+          : lang === 'ru'
+          ? 'Не удалось подключиться к базе данных. Попробуйте позже.'
+          : "Couldn't reach the database. Try again later."
+      );
+    } else if (ok) {
+      researcherPasscode.set(cleaned);
       changeRole('researcher');
+      storageEngine.syncWithCentralBackend();
       setSuccessMessage(
         lang === 'kk'
           ? 'Ғалым / Зерттеуші ретінде сәтті кірдіңіз!'

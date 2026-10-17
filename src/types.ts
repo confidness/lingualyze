@@ -32,6 +32,7 @@ export interface ParticipantProfile {
   selfRatedReadingProficiency?: number; // 1 - 5
   notes?: string;
   createdAt: string;
+  token?: string; // random secret authorizing this browser to update the participant in the database
 }
 
 export interface EmojiItem {
@@ -208,9 +209,11 @@ export interface StoredTestRecord {
   detailed_responses: DetailedResponseItem[];
   cefr_level?: CEFRLevel;
   notes?: string;
+  trial?: TrialResult; // full trial measures, used by researcher analytics
+  participant_token?: string; // see ParticipantProfile.token; never returned by the database
 }
 
-export type ActiveTab = 
+export type ActiveTab =
   | 'overview' 
   | 'methodology'
   | 'participant' 

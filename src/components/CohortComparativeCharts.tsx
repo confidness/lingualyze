@@ -51,8 +51,8 @@ export const CohortComparativeCharts: React.FC<CohortComparativeChartsProps> = (
       labelRu: 'L1 Казахский (Родной)',
       labelEn: 'L1 Kazakh Natives',
       sampleSize: cohortBenchmarks.kazakh_dominant.sampleSize,
-      color: '#059669', // emerald-600
-      bgLight: 'rgba(5, 150, 105, 0.12)',
+      color: '#0C7A9C', // emerald-600
+      bgLight: 'rgba(12,122,156, 0.12)',
       border: 'rgb(5, 150, 105)'
     },
     {

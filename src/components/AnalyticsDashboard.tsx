@@ -525,7 +525,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                     <line x1="280" y1="0" x2="280" y2="180" stroke="#94A3B8" strokeDasharray="2 2" strokeOpacity="0.4" />
                     <line x1="400" y1="0" x2="400" y2="180" stroke="#94A3B8" strokeDasharray="2 2" strokeOpacity="0.4" />
                     {/* SOV */}
-                    <path d="M 10,88 Q 60,82 120,90 T 250,88 T 380,85 T 490,89" fill="none" stroke="#10B981" strokeWidth="2.5" />
+                    <path d="M 10,88 Q 60,82 120,90 T 250,88 T 380,85 T 490,89" fill="none" stroke="#1593B5" strokeWidth="2.5" />
                     {/* OSV */}
                     <path d="M 10,89 Q 60,80 120,95 T 250,92 T 380,30 T 490,75" fill="none" stroke="#0284C7" strokeWidth="3" />
                     {/* SVO */}

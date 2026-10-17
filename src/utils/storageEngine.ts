@@ -1,7 +1,135 @@
-import { StoredTestRecord, DetailedResponseItem, LanguageDominanceGroup, WordOrderCondition, CEFRLevel } from '../types';
+import { StoredTestRecord, DetailedResponseItem, LanguageDominanceGroup, WordOrderCondition, CEFRLevel, ParticipantProfile, TrialResult } from '../types';
+import { rpc, researcherPasscode } from './db';
 
 const STORAGE_KEY = 'lingualyze_test_database_v1';
 const DB_CHANGE_EVENT = 'lingualyze_db_updated';
+
+// Row shapes of the Supabase tables (see supabase/migrations); SQL nulls are stripped to undefined on read
+interface DbParticipant {
+  id: string;
+  name: string;
+  phone?: string;
+  age?: number;
+  cohort: LanguageDominanceGroup;
+}
+
+interface DbTest {
+  id: string;
+  participant_id: string;
+  created_at: string;
+  stimulus_id: string;
+  sentence?: string;
+  word_order: WordOrderCondition;
+  cefr_level?: CEFRLevel;
+  complexity?: TrialResult['complexity'];
+  length?: TrialResult['length'];
+  predictability?: TrialResult['predictability'];
+  presentation_mode?: TrialResult['presentationMode'];
+  reading_time_ms: number;
+  reading_speed_wpm?: number;
+  question_rt_ms?: number;
+  part1_correct?: boolean;
+  part1_rt_ms?: number;
+  part2_correct?: boolean;
+  part2_rt_ms?: number;
+  part3_correct?: boolean;
+  part3_rt_ms?: number;
+  is_correct: boolean;
+  accuracy_score?: number;
+  cognitive_load?: number;
+  per_word_rt_ms?: number[];
+  selected_option?: string;
+  error_type?: string;
+}
+
+const withoutNulls = <T>(value: T): T => JSON.parse(JSON.stringify(value), (_k, v) => (v === null ? undefined : v));
+
+const toDbTest = (r: StoredTestRecord): Omit<DbTest, 'created_at'> => {
+  const d = r.detailed_responses[0];
+  const t = r.trial;
+  return {
+    id: r.test_id,
+    participant_id: r.participant_id,
+    stimulus_id: t?.stimulusId ?? d?.stimulus_id,
+    sentence: d?.sentence_kazakh,
+    word_order: r.word_order,
+    cefr_level: r.cefr_level,
+    complexity: t?.complexity,
+    length: t?.length,
+    predictability: t?.predictability,
+    presentation_mode: t?.presentationMode,
+    reading_time_ms: r.reading_time_ms,
+    reading_speed_wpm: t?.readingSpeedWpm,
+    question_rt_ms: r.reaction_time_ms,
+    part1_correct: d?.part1_correct,
+    part1_rt_ms: t?.part1RtMs,
+    part2_correct: d?.part2_correct,
+    part2_rt_ms: t?.part2RtMs,
+    part3_correct: d?.part3_correct,
+    part3_rt_ms: t?.part3RtMs,
+    is_correct: d?.is_overall_correct ?? t?.isCorrect ?? false,
+    accuracy_score: r.accuracy_score,
+    cognitive_load: t?.cognitiveLoadScore,
+    per_word_rt_ms: t?.perWordRtMs,
+    selected_option: d?.selected_choice,
+    error_type: d?.error_type,
+  };
+};
+
+const fromDb = (t: DbTest, p?: DbParticipant): StoredTestRecord => ({
+  test_id: t.id,
+  participant_id: t.participant_id,
+  student_name: p?.name,
+  phone_number: p?.phone,
+  age: p?.age,
+  cohort: p?.cohort ?? 'kazakh_dominant',
+  timestamp: t.created_at,
+  word_order: t.word_order,
+  reading_time_ms: t.reading_time_ms,
+  reaction_time_ms: t.question_rt_ms ?? 0,
+  accuracy_score: t.accuracy_score ?? (t.is_correct ? 100 : 0),
+  cefr_level: t.cefr_level,
+  detailed_responses: [{
+    stimulus_id: t.stimulus_id,
+    sentence_kazakh: t.sentence ?? '',
+    word_order: t.word_order,
+    cefr_level: t.cefr_level ?? 'A1',
+    reading_time_ms: t.reading_time_ms,
+    reaction_time_ms: t.question_rt_ms ?? 0,
+    part1_correct: !!t.part1_correct,
+    part2_correct: !!t.part2_correct,
+    part3_correct: !!t.part3_correct,
+    is_overall_correct: t.is_correct,
+    selected_choice: t.selected_option,
+    error_type: t.error_type,
+  }],
+  trial: {
+    trialId: t.id,
+    stimulusId: t.stimulus_id,
+    participantId: t.participant_id,
+    dominanceGroup: p?.cohort,
+    cefrLevel: t.cefr_level,
+    part1Correct: t.part1_correct,
+    part1RtMs: t.part1_rt_ms,
+    part2Correct: t.part2_correct,
+    part2RtMs: t.part2_rt_ms,
+    part3Correct: t.part3_correct,
+    part3RtMs: t.part3_rt_ms,
+    wordOrder: t.word_order,
+    complexity: t.complexity ?? 'simple',
+    length: t.length ?? 'short',
+    predictability: t.predictability ?? 'high',
+    readingTimeMs: t.reading_time_ms,
+    readingSpeedWpm: t.reading_speed_wpm ?? 0,
+    perWordRtMs: t.per_word_rt_ms,
+    questionResponseTimeMs: t.question_rt_ms ?? 0,
+    isCorrect: t.is_correct,
+    selectedOptionId: t.selected_option ?? '',
+    cognitiveLoadScore: t.cognitive_load ?? 0,
+    timestamp: t.created_at,
+    presentationMode: t.presentation_mode ?? 'whole_sentence',
+  },
+});
 
 // Helper to generate UUID v4
 export const generateUUID = (): string => {
@@ -214,26 +342,62 @@ class StorageEngine {
   }
 
   /**
-   * Sync with centralized Express API backend
+   * Load every participant's records from the research database (researchers only)
    */
   public async syncWithCentralBackend(): Promise<void> {
-    if (typeof window === 'undefined' || this.isSyncing) return;
+    const passcode = researcherPasscode.get();
+    if (typeof window === 'undefined' || this.isSyncing || !passcode) return;
     this.isSyncing = true;
     try {
-      const res = await fetch('/api/records');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.records && Array.isArray(data.records)) {
-          const { cleanRecords } = this.deduplicateAndSanitize(data.records);
-          this.cache = cleanRecords;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanRecords));
-          this.notifyUpdate();
-        }
-      }
+      const data = withoutNulls(await rpc<{ participants: DbParticipant[]; tests: DbTest[] }>('research_data', { passcode }));
+      const people = new Map(data.participants.map(p => [p.id, p]));
+      this.cache = data.tests.map(t => fromDb(t, people.get(t.participant_id)));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.cache));
+      this.notifyUpdate();
     } catch (err) {
-      // Backend may be offline or in development start phase
+      console.warn('Loading research data failed:', err);
     } finally {
       this.isSyncing = false;
+    }
+  }
+
+  /**
+   * Drop research data from this browser when a researcher signs out
+   */
+  public forgetResearchData(): void {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // storage blocked
+    }
+    this.cache = null;
+    this.initialize();
+    this.notifyUpdate();
+  }
+
+  /**
+   * Save (or update) a participant in the research database
+   */
+  public async saveParticipant(p: Pick<ParticipantProfile, 'id' | 'studentName' | 'phoneNumber' | 'age' | 'dominanceGroup' | 'token'>): Promise<void> {
+    await rpc('save_participant', {
+      p: { id: p.id, name: p.studentName, phone: p.phoneNumber, age: p.age, cohort: p.dominanceGroup, token: p.token }
+    });
+  }
+
+  private async pushToDatabase(r: StoredTestRecord): Promise<void> {
+    try {
+      // The participant row must exist before the test row that references it
+      await this.saveParticipant({
+        id: r.participant_id,
+        studentName: r.student_name,
+        phoneNumber: r.phone_number,
+        age: r.age as number,
+        dominanceGroup: r.cohort,
+        token: r.participant_token
+      });
+      await rpc('save_test', { t: { ...toDbTest(r), token: r.participant_token } });
+    } catch (err) {
+      console.warn('Saving to the research database failed; kept in this browser:', err);
     }
   }
 
@@ -274,14 +438,7 @@ class StorageEngine {
       }
       this.notifyUpdate();
 
-      // Asynchronously push to centralized backend
-      fetch('/api/records', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(finalRecord)
-      }).catch(err => {
-        console.warn('Centralized API push failed, cached locally:', err);
-      });
+      this.pushToDatabase(finalRecord);
 
       return true;
     } catch (err) {
@@ -304,10 +461,12 @@ class StorageEngine {
       }
       this.notifyUpdate();
 
-      // Asynchronously delete on central backend
-      fetch(`/api/records/${testId}`, { method: 'DELETE' }).catch(err => {
-        console.warn('Centralized API delete failed:', err);
-      });
+      const passcode = researcherPasscode.get();
+      if (passcode) {
+        rpc('delete_test', { passcode, test_id: testId }).catch(err => {
+          console.warn('Deleting from the research database failed:', err);
+        });
+      }
 
       return true;
     } catch (err) {
@@ -331,12 +490,6 @@ class StorageEngine {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanRecords));
     }
     this.notifyUpdate();
-
-    try {
-      await fetch('/api/records/cleanup', { method: 'POST' });
-    } catch {
-      // offline fallback
-    }
 
     return {
       duplicatesRemoved,
@@ -372,8 +525,6 @@ class StorageEngine {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SEED_RECORDS));
       }
       this.notifyUpdate();
-
-      fetch('/api/records/reset', { method: 'POST' }).catch(() => {});
       return true;
     } catch (err) {
       console.error('Failed to reset seeds:', err);

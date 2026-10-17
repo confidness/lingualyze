@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import {
   Play,
   ArrowRight,
@@ -17,6 +17,10 @@ import {
 } from 'lucide-react';
 import { ActiveTab, LanguageCode, ParticipantProfile, TrialResult } from '../types';
 import { skillNames } from './MyResults';
+import { LivingSentence } from './LivingSentence';
+
+// Three.js loads in its own chunk so it doesn't delay the first paint
+const LogoBlocks3D = lazy(() => import('./LogoBlocks3D'));
 
 interface OverviewSectionProps {
   setActiveTab: (tab: ActiveTab) => void;
@@ -140,26 +144,24 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
     <div className="space-y-8 pb-16">
 
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 sm:p-12 shadow-sm">
-        <div className="absolute top-0 right-0 -mr-24 -mt-24 w-96 h-96 rounded-full bg-emerald-50/60 dark:bg-emerald-950/20 blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 max-w-3xl">
+      <section className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-10 shadow-sm grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-8 lg:gap-12 items-center">
+        <div>
           <div className="flex flex-wrap items-center gap-2 mb-5">
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-semibold">
               <Clock className="w-3.5 h-3.5" />
-              <span>{tr('Тегін • шамамен 10 минут', 'Бесплатно • около 10 минут', 'Free • about 10 minutes')}</span>
+              <span>{tr('Тегін, шамамен 10 минут', 'Бесплатно, около 10 минут', 'Free, about 10 minutes')}</span>
             </span>
             <a
               href="#hypothesis"
               className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold hover:opacity-90 transition-opacity"
             >
               <FlaskConical className="w-3.5 h-3.5" />
-              <span>{tr('Ғылыми зерттеу • гипотезаны оқу', 'Научное исследование • гипотеза', 'Research study • see the hypothesis')}</span>
+              <span>{tr('Ғылыми зерттеу: гипотезаны оқу', 'Научное исследование: гипотеза', 'Research study: see the hypothesis')}</span>
               <ArrowDown className="w-3.5 h-3.5" />
             </a>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-semibold text-slate-900 dark:text-slate-100 leading-[1.15]">
             {firstName
               ? tr(`Сәлем, ${firstName}!`, `Привет, ${firstName}!`, `Hi, ${firstName}!`)
               : tr('Қазақша қаншалықты жақсы оқисыз?', 'Насколько хорошо вы читаете по-казахски?', 'How well do you read Kazakh?')}
@@ -205,6 +207,13 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
             </p>
           )}
         </div>
+
+        <div className="space-y-2">
+          <Suspense fallback={<div className="h-40 sm:h-52" />}>
+            <LogoBlocks3D className="h-40 sm:h-52 w-full" />
+          </Suspense>
+          <LivingSentence lang={lang} />
+        </div>
       </section>
 
       {/* Research hypothesis: what the app is built to test */}
@@ -214,11 +223,11 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({
         className="scroll-mt-24 rounded-3xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50/60 dark:bg-emerald-950/20 p-6 sm:p-8 space-y-6"
       >
         <div>
-          <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+          <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
             <FlaskConical className="w-4 h-4" />
             {tr('Біздің гипотеза', 'Наша гипотеза', 'Our hypothesis')}
           </span>
-          <h2 id="hypothesis-heading" className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+          <h2 id="hypothesis-heading" className="mt-2 font-display text-xl sm:text-2xl font-semibold leading-snug text-slate-900 dark:text-slate-100">
             {tr(
               'Сөздердің орны қазақша сөйлемді оқу мен түсінуге қалай әсер етеді?',
               'Как порядок слов влияет на чтение и понимание казахских предложений?',

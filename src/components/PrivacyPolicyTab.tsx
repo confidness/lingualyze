@@ -146,12 +146,14 @@ export const PrivacyPolicyTab: React.FC<PrivacyPolicyTabProps> = ({
             <Lock className="w-5 h-5" />
           </div>
           <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-            {lang === 'kk' ? '4. Жеке мәліметтер жоқтығы (Zero PII Guarantee)' : '4. Zero PII & Local Storage Guarantee'}
+            {lang === 'kk' ? '4. Жеке деректер және сақтау' : lang === 'ru' ? '4. Личные данные и хранение' : '4. Personal data & storage'}
           </h3>
           <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
             {lang === 'kk'
-              ? 'Ешқандай аты-жөні, ЖСН, телефон нөмірі немесе тұрғылықты жері талап етілмейді. Барлық респонденттер тек бүркеншік ID арқылы (мысалы: P-KZ-104) белгіленеді. Мәліметтер тек браузердің өзінде сақталады және үшінші тарапқа берілмейді.'
-              : 'No personally identifiable information (PII) is ever asked or recorded. Participants are strictly pseudonymized via ID tokens. No tracking cookies or commercial telemetry exist.'}
+              ? 'Тіркелу кезінде аты-жөніңіз, телефон нөміріңіз, жасыңыз және тілдік тобыңыз сұралады. Олар жауаптарыңызбен бірге қорғалған дерекқорда (Supabase, Еуропа) сақталады. Оларды тек құпиякоды бар зерттеушілер көре алады. Деректер сатылмайды және жарнамаға қолданылмайды.'
+              : lang === 'ru'
+              ? 'При регистрации мы спрашиваем имя, номер телефона, возраст и языковую группу. Они хранятся вместе с вашими ответами в защищённой базе данных (Supabase, Европа). Доступ есть только у исследователей с паролем. Данные не продаются и не используются для рекламы.'
+              : 'When you sign up we ask for your name, phone number, age and language group. They are stored with your answers in a protected database (Supabase, Europe). Only researchers with a passcode can read them. Data is never sold or used for advertising.'}
           </p>
         </div>
 
@@ -165,9 +167,11 @@ export const PrivacyPolicyTab: React.FC<PrivacyPolicyTabProps> = ({
               {lang === 'kk' ? 'Қатысушының дербес құқықтары' : lang === 'ru' ? 'Права участника исследования' : 'Participant Data Control & Rights'}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {lang === 'kk' 
-                ? 'Кез келген уақытта өз деректеріңізді көшіріп алуға немесе толықтай өшіруге құқылысыз.' 
-                : 'You have full sovereignty over your test records stored in this browser session.'}
+              {lang === 'kk'
+                ? 'Төмендегі әрекеттер осы браузердегі көшірмеге қатысты. Зерттеу дерекқорындағы деректеріңізді өшіру үшін зерттеушілерге хабарласыңыз.'
+                : lang === 'ru'
+                ? 'Действия ниже относятся к копии в этом браузере. Чтобы удалить данные из исследовательской базы, свяжитесь с исследователями.'
+                : 'The actions below apply to the copy kept in this browser. To delete your data from the research database, contact the researchers.'}
             </p>
           </div>
         </div>
@@ -222,11 +226,11 @@ export const PrivacyPolicyTab: React.FC<PrivacyPolicyTabProps> = ({
               {lang === 'kk' ? 'Деректерді өшіру' : lang === 'ru' ? 'Удалить данные' : 'Erase My Data'}
             </span>
             <p className="text-[11px] text-rose-700/80 dark:text-rose-400">
-              {lang === 'kk' 
-                ? 'Браузерде сақталған барлық сынақ жазбаларын бірден тазалау.' 
+              {lang === 'kk'
+                ? 'Осы браузерде сақталған сынақ жазбаларын тазалау.'
                 : lang === 'ru'
-                ? 'Удалить все сохраненные результаты из памяти браузера.'
-                : 'Purge all sessions from browser storage permanently.'}
+                ? 'Удалить результаты из памяти этого браузера.'
+                : 'Clear the test records saved in this browser.'}
             </p>
             <button
               onClick={handleClearMyData}

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { ActiveTab, LanguageCode, ParticipantProfile, ThemeMode, UserRole } from '../types';
 import { translations } from '../data/translations';
+import { Logo } from './Logo';
 
 interface NavbarProps {
   activeTab: ActiveTab;
@@ -139,21 +140,21 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between h-13 sm:h-14 gap-2 sm:gap-4">
           
-          {/* Scientific Platform Brand */}
-          <div 
-            id="nav-logo" 
+          {/* Brand: logo links home */}
+          <button
+            type="button"
+            id="nav-logo"
             onClick={() => setActiveTab('overview')}
-            className="flex items-center gap-1.5 cursor-pointer group shrink-0"
+            className="flex items-center gap-1.5 cursor-pointer group shrink-0 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
           >
-            <span className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-              Lingualyze
-            </span>
+            <Logo />
+            <span className="sr-only">{lang === 'kk' ? 'Басты бет' : lang === 'ru' ? 'Главная' : 'Home'}</span>
             {isResearcher && (
               <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800">
                 Lab
               </span>
             )}
-          </div>
+          </button>
 
           {/* Navigation Categories - Compact and Clean */}
           <nav className="hidden md:flex items-center p-0.5 sm:p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700 gap-0.5 overflow-x-auto no-scrollbar shrink min-w-0">
