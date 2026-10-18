@@ -32,7 +32,8 @@ import {
   TrialResult, 
   WordOrderCondition,
   CEFRLevel,
-  UserRole 
+  UserRole,
+  StimulusSentence
 } from '../types';
 import { translations } from '../data/translations';
 import { 
@@ -50,6 +51,7 @@ interface AnalyticsDashboardProps {
   lang: LanguageCode;
   currentRole?: UserRole;
   onOpenAuthModal?: () => void;
+  stimuli?: StimulusSentence[];
 }
 
 type MainDashboardTab = 'live_data' | 'conclusions' | 'cohort_comparison' | 'statistical_rigor' | 'trial_overview';
@@ -58,7 +60,8 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   allTrials, 
   lang,
   currentRole = 'researcher',
-  onOpenAuthModal
+  onOpenAuthModal,
+  stimuli
 }) => {
   const t = translations[lang];
 
@@ -74,7 +77,10 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
 
   // Total trial metrics
   const totalRecorded = allTrials.length;
-  const totalSampleN = 125 + (totalRecorded > 0 ? 1 : 0);
+  // Real sample: distinct participants in the recorded trials, split by language group
+  const cohortOf = new Map(allTrials.map(tr => [tr.participantId, tr.dominanceGroup]));
+  const totalSampleN = cohortOf.size;
+  const cohortCount = (g: LanguageDominanceGroup) => [...cohortOf.values()].filter(c => c === g).length;
   const avgTrialRt = totalRecorded > 0 
     ? Math.round(allTrials.reduce((a, b) => a + b.readingTimeMs, 0) / totalRecorded) 
     : 1840;
@@ -228,7 +234,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               N = {totalSampleN}
             </span>
             <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5">
-              (L1: 45 | Bil: 48 | L2: 32)
+              (L1: {cohortCount('kazakh_dominant')} | Bil: {cohortCount('bilingual_balanced')} | L2: {cohortCount('kazakh_l2')})
             </span>
           </div>
         </div>
@@ -327,9 +333,19 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         </button>
       </div>
 
+      {activeMainTab !== 'live_data' && (
+        <p className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-sm text-amber-900 dark:text-amber-200">
+          {lang === 'kk'
+            ? 'Бұл қойындыдағы сандар бастапқы дизайннан алынған мысал мәндер, қатысушылардың деректерінен есептелмеген. Нақты талдау «Нақты деректер» қойындысында.'
+            : lang === 'ru'
+            ? 'Числа на этой вкладке — примерные значения из исходного дизайна, они не рассчитаны по данным участников. Реальный анализ — на вкладке «Живые данные».'
+            : 'The numbers on this tab are example values from the original design, not computed from your participants. The real analysis is on the Live data tab.'}
+        </p>
+      )}
+
       {activeMainTab === 'live_data' && (
         <div className="space-y-8 animate-in fade-in duration-200">
-          <LiveDataAnalysis allTrials={allTrials} lang={lang} />
+          <LiveDataAnalysis allTrials={allTrials} lang={lang} stimuli={stimuli} />
         </div>
       )}
 

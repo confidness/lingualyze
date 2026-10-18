@@ -194,6 +194,18 @@ export interface DetailedResponseItem {
   error_type?: string;
 }
 
+// What the participant chose in each part, next to the expected answer (texts in Kazakh, as shown in the test)
+export interface TestAnswers {
+  question1?: string;
+  part1?: string;
+  part1_expected?: string;
+  part2?: string;
+  part2_expected?: string;
+  question3?: string;
+  part3?: string;
+  part3_expected?: string;
+}
+
 export interface StoredTestRecord {
   test_id: string; // UUID / unique identifier
   participant_id: string;
@@ -210,6 +222,7 @@ export interface StoredTestRecord {
   cefr_level?: CEFRLevel;
   notes?: string;
   trial?: TrialResult; // full trial measures, used by researcher analytics
+  answers?: TestAnswers;
   participant_token?: string; // see ParticipantProfile.token; never returned by the database
 }
 
@@ -219,6 +232,7 @@ export type ActiveTab =
   | 'participant' 
   | 'experiment'
   | 'results'
+  | 'answers'
   | 'analytics'
   | 'database' 
   | 'neurolinguistics'
@@ -226,5 +240,5 @@ export type ActiveTab =
   | 'admin';
 
 // Tabs only visible after researcher sign-in; everything else is the client-facing site
-export const RESEARCH_TABS: ActiveTab[] = ['analytics', 'admin', 'database', 'neurolinguistics', 'methodology'];
+export const RESEARCH_TABS: ActiveTab[] = ['answers', 'analytics', 'admin', 'database', 'neurolinguistics', 'methodology'];
 

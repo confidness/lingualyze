@@ -30,7 +30,8 @@ import {
   CEFRLevel,
   EmojiItem,
   StoredTestRecord,
-  DetailedResponseItem
+  DetailedResponseItem,
+  TestAnswers
 } from '../types';
 import { translations } from '../data/translations';
 import { calculateCognitiveLoad, calculateWpm } from '../utils/statistics';
@@ -55,6 +56,29 @@ interface ExperimentRunnerProps {
 }
 
 const seconds = (ms: number) => (ms / 1000).toFixed(1);
+
+// The participant's choices as readable Kazakh text, saved for the scientist/teacher answer sheet
+const buildAnswers = (
+  s: StimulusSentence,
+  part1OptionId: string | undefined,
+  part2Order: string[] | undefined,
+  part3Choice: 'A' | 'B'
+): TestAnswers => {
+  const option = (id?: string) => s.question.options.find(o => o.id === id)?.textKk;
+  const emojis = (ids: string[]) =>
+    ids.map(id => s.emojiChain.items.find(e => e.id === id)).map(e => (e ? `${e.emoji} ${e.labelKk}` : '?')).join(' → ');
+  const sentence = (c: 'A' | 'B') => (c === 'A' ? s.suffixContrast.sentenceA : s.suffixContrast.sentenceB);
+  return {
+    question1: s.question.questionText.kk,
+    part1: option(part1OptionId),
+    part1_expected: option(s.question.correctOptionId),
+    part2: part2Order ? emojis(part2Order) : undefined,
+    part2_expected: emojis(s.emojiChain.correctOrderIds),
+    question3: s.suffixContrast.targetQuestionText.kk,
+    part3: sentence(part3Choice),
+    part3_expected: sentence(s.suffixContrast.correctSentence),
+  };
+};
 
 type ExperimentPhase = 
   | 'idle' 
@@ -453,7 +477,8 @@ export const ExperimentRunner: React.FC<ExperimentRunnerProps> = ({
         detailed_responses: [detailedItem],
         cefr_level: currentStimulus.cefrLevel,
         notes: `CEFR ${currentStimulus.cefrLevel} • 3-Part Accuracy: ${Math.round((correctPartsCount / 3) * 100)}%`,
-        trial: trialResult
+        trial: trialResult,
+        answers: buildAnswers(currentStimulus, p1?.selectedOptionId, p2?.userOrder, p3.chosenSentence)
       };
 
       storageEngine.saveSession(record);

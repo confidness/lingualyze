@@ -6,7 +6,8 @@ import {
   User,
   Calendar,
   AlertCircle,
-  ShieldCheck
+  ShieldCheck,
+  GraduationCap
 } from 'lucide-react';
 import { LanguageCode, LanguageDominanceGroup, ParticipantProfile } from '../types';
 import { translations } from '../data/translations';
@@ -19,6 +20,7 @@ interface ParticipantOnboardingProps {
   isResearcher?: boolean;
   onProceedToExperiment: () => void;
   onOpenPrivacy?: () => void;
+  onOpenScientistLogin?: () => void;
 }
 
 const inputCls = (hasError?: string) =>
@@ -42,7 +44,8 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
   lang,
   isResearcher = false,
   onProceedToExperiment,
-  onOpenPrivacy
+  onOpenPrivacy,
+  onOpenScientistLogin
 }) => {
   const t = translations[lang];
   const tr = (kk: string, ru: string, en: string) => (lang === 'kk' ? kk : lang === 'ru' ? ru : en);
@@ -362,6 +365,30 @@ export const ParticipantOnboarding: React.FC<ParticipantOnboardingProps> = ({
         </div>
 
       </form>
+
+      {/* Second way in: scientists and teachers don't take the test, they read everyone's answers */}
+      {!isResearcher && onOpenScientistLogin && (
+        <div className="mt-4 p-5 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <GraduationCap className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {tr('Ғалымсыз ба, әлде мұғалімсіз бе?', 'Вы учёный или учитель?', 'Scientist or teacher?')}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {tr('Барлық жауаптар мен тест талдауын көру үшін құпиякодпен кіріңіз.', 'Войдите с паролем, чтобы видеть все ответы и анализ теста.', 'Sign in with your passcode to see everyone’s answers and the test analysis.')}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenScientistLogin}
+            className="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-600 text-emerald-700 dark:text-emerald-300 dark:border-emerald-500 font-semibold text-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer"
+          >
+            {tr('Ғалым / мұғалім ретінде кіру', 'Войти как учёный / учитель', 'Sign in as scientist / teacher')}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

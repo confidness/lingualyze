@@ -129,10 +129,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
           <div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-              {lang === 'kk' ? 'Ғалымдарға арналған кіру' : lang === 'ru' ? 'Вход для исследователей' : 'Researcher sign-in'}
+              {lang === 'kk' ? 'Ғалым / мұғалім ретінде кіру' : lang === 'ru' ? 'Вход для учёных и учителей' : 'Scientist / teacher sign-in'}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {lang === 'kk' ? 'Толық деректер мен талдауға қол жеткізу' : lang === 'ru' ? 'Доступ к полным данным и анализу' : 'Access full data and analysis'}
+              {lang === 'kk' ? 'Барлық жауаптар мен тест талдауын көру' : lang === 'ru' ? 'Все ответы и анализ теста' : 'See everyone\u2019s answers and the test analysis'}
             </p>
           </div>
         </div>
@@ -147,8 +147,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </span>
               <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
                 {currentRole === 'researcher'
-                  ? (lang === 'kk' ? 'Зерттеуші / Ғалым (Admin)' : lang === 'ru' ? 'Исследователь (Admin)' : 'Researcher / Admin')
-                  : (lang === 'kk' ? 'Қатысушы / Респондент' : lang === 'ru' ? 'Участник / Респондент' : 'Participant / User')}
+                  ? (lang === 'kk' ? 'Ғалым / мұғалім' : lang === 'ru' ? 'Учёный / учитель' : 'Scientist / teacher')
+                  : (lang === 'kk' ? 'Тест тапсырушы' : lang === 'ru' ? 'Участник теста' : 'Test taker')}
               </span>
             </div>
           </div>
@@ -192,14 +192,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               className="w-full py-3 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-700 transition-all flex items-center justify-center gap-2"
             >
               <Lock className="w-3.5 h-3.5" />
-              <span>{lang === 'kk' ? 'Қатысушы режиміне шығу' : lang === 'ru' ? 'Выйти в режим Участника' : 'Log Out to Participant Mode'}</span>
+              <span>{lang === 'kk' ? 'Шығу' : lang === 'ru' ? 'Выйти' : 'Sign out'}</span>
             </button>
           </div>
         ) : (
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                {lang === 'kk' ? 'Зерттеуші құпиякоды (Passcode)' : lang === 'ru' ? 'Пароль исследователя' : 'Researcher Passcode'}
+                {lang === 'kk' ? 'Құпиякод' : lang === 'ru' ? 'Пароль' : 'Passcode'}
               </label>
               <div className="relative">
                 <input
@@ -225,7 +225,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs shadow-md shadow-emerald-600/20 active:translate-y-0.5 transition-all flex items-center justify-center gap-2"
             >
               <Unlock className="w-4 h-4" />
-              <span>{lang === 'kk' ? 'Зерттеуші ретінде кіру' : lang === 'ru' ? 'Войти как Исследователь' : 'Unlock Researcher Access'}</span>
+              <span>{lang === 'kk' ? 'Кіру' : lang === 'ru' ? 'Войти' : 'Sign in'}</span>
             </button>
           </form>
         )}

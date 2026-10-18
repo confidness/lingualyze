@@ -47,6 +47,21 @@ export function summarize(values: number[]): Summary {
   return { n, mean, sd, se, ci95, median };
 }
 
+// Pearson correlation; NaN when there are fewer than 3 pairs or either side has no variance
+export function pearson(xs: number[], ys: number[]): number {
+  const n = xs.length;
+  if (n < 3 || n !== ys.length) return NaN;
+  const mx = xs.reduce((a, b) => a + b, 0) / n;
+  const my = ys.reduce((a, b) => a + b, 0) / n;
+  let sxy = 0, sxx = 0, syy = 0;
+  for (let i = 0; i < n; i++) {
+    sxy += (xs[i] - mx) * (ys[i] - my);
+    sxx += (xs[i] - mx) ** 2;
+    syy += (ys[i] - my) ** 2;
+  }
+  return sxx === 0 || syy === 0 ? NaN : sxy / Math.sqrt(sxx * syy);
+}
+
 export function calculateWpm(wordCount: number, readingTimeMs: number): number {
   if (readingTimeMs <= 0) return 0;
   const minutes = readingTimeMs / 60000;

@@ -15,6 +15,7 @@ import { OverviewSection } from './components/OverviewSection';
 import { ParticipantOnboarding } from './components/ParticipantOnboarding';
 import { ExperimentRunner } from './components/ExperimentRunner';
 import { MyResults } from './components/MyResults';
+import { AnswersView } from './components/AnswersView';
 import { InteractiveSimulator } from './components/InteractiveSimulator';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { SentenceDatabase } from './components/SentenceDatabase';
@@ -332,6 +333,7 @@ export default function App() {
             isResearcher={isResearcher}
             onProceedToExperiment={() => setActiveTab('experiment')}
             onOpenPrivacy={() => setActiveTab('privacy')}
+            onOpenScientistLogin={() => setIsAuthModalOpen(true)}
           />
         )}
 
@@ -357,12 +359,15 @@ export default function App() {
           />
         )}
 
+        {tab === 'answers' && <AnswersView lang={lang} />}
+
         {tab === 'analytics' && (
           <AnalyticsDashboard
             allTrials={dbTrials.length > 0 ? dbTrials : allTrials}
             lang={lang}
             currentRole={currentRole}
             onOpenAuthModal={() => setIsAuthModalOpen(true)}
+            stimuli={stimuli}
           />
         )}
 
@@ -413,8 +418,11 @@ export default function App() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         currentRole={currentRole}
-        onRoleChange={setCurrentRole}
-        setCurrentRole={setCurrentRole}
+        onRoleChange={role => {
+          setCurrentRole(role);
+          // Scientists and teachers land on everyone's answers after signing in
+          if (role === 'researcher') setActiveTab('answers');
+        }}
         lang={lang}
       />
 
@@ -445,7 +453,7 @@ export default function App() {
               onClick={() => setIsAuthModalOpen(true)}
               className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
             >
-              {lang === 'kk' ? 'Ғалымдарға' : lang === 'ru' ? 'Для учёных' : 'For researchers'}
+              {lang === 'kk' ? 'Ғалымдар мен мұғалімдерге' : lang === 'ru' ? 'Для учёных и учителей' : 'For scientists and teachers'}
             </button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { StoredTestRecord, DetailedResponseItem, LanguageDominanceGroup, WordOrderCondition, CEFRLevel, ParticipantProfile, TrialResult } from '../types';
+import { StoredTestRecord, DetailedResponseItem, LanguageDominanceGroup, WordOrderCondition, CEFRLevel, ParticipantProfile, TrialResult, TestAnswers } from '../types';
 import { rpc, researcherPasscode } from './db';
 
 const STORAGE_KEY = 'lingualyze_test_database_v1';
@@ -40,6 +40,7 @@ interface DbTest {
   per_word_rt_ms?: number[];
   selected_option?: string;
   error_type?: string;
+  answers?: TestAnswers;
 }
 
 const withoutNulls = <T>(value: T): T => JSON.parse(JSON.stringify(value), (_k, v) => (v === null ? undefined : v));
@@ -73,6 +74,7 @@ const toDbTest = (r: StoredTestRecord): Omit<DbTest, 'created_at'> => {
     per_word_rt_ms: t?.perWordRtMs,
     selected_option: d?.selected_choice,
     error_type: d?.error_type,
+    answers: r.answers,
   };
 };
 
@@ -89,6 +91,7 @@ const fromDb = (t: DbTest, p?: DbParticipant): StoredTestRecord => ({
   reaction_time_ms: t.question_rt_ms ?? 0,
   accuracy_score: t.accuracy_score ?? (t.is_correct ? 100 : 0),
   cefr_level: t.cefr_level,
+  answers: t.answers,
   detailed_responses: [{
     stimulus_id: t.stimulus_id,
     sentence_kazakh: t.sentence ?? '',

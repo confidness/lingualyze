@@ -1,11 +1,12 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { CEFRLevel, LanguageCode, LanguageDominanceGroup, TrialResult, WordOrderCondition } from '../types';
-import { summarize } from '../utils/statistics';
+import { CEFRLevel, LanguageCode, LanguageDominanceGroup, StimulusSentence, TrialResult, WordOrderCondition } from '../types';
+import { summarize, pearson } from '../utils/statistics';
 
 interface LiveDataAnalysisProps {
   allTrials: TrialResult[];
   lang: LanguageCode;
+  stimuli?: StimulusSentence[]; // to show sentence text in the item analysis
 }
 
 const ORDERS: WordOrderCondition[] = ['SOV', 'OSV', 'SVO', 'OVS'];
@@ -39,7 +40,7 @@ const tableCls = 'w-full text-xs font-mono border border-slate-200 dark:border-s
 const headCls = 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300';
 const bodyCls = 'divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200';
 
-export const LiveDataAnalysis: React.FC<LiveDataAnalysisProps> = ({ allTrials, lang }) => {
+export const LiveDataAnalysis: React.FC<LiveDataAnalysisProps> = ({ allTrials, lang, stimuli = [] }) => {
   const tr = (kk: string, ru: string, en: string) => (lang === 'kk' ? kk : lang === 'ru' ? ru : en);
 
   if (allTrials.length === 0) {
@@ -62,6 +63,49 @@ export const LiveDataAnalysis: React.FC<LiveDataAnalysisProps> = ({ allTrials, l
   const positions = Array.from({ length: maxWords }, (_, i) =>
     summarize(sprTrials.map(t => t.perWordRtMs![i]).filter((v): v is number => v !== undefined))
   );
+
+  // Score distribution: each participant's overall accuracy in 10-point bins
+  const accuracy = (rows: TrialResult[]) => rows.filter(r => r.isCorrect).length / rows.length;
+  const trialsOf = new Map<string, TrialResult[]>();
+  allTrials.forEach(t => trialsOf.set(t.participantId, [...(trialsOf.get(t.participantId) ?? []), t]));
+  const scores = [...trialsOf.values()].map(rows => Math.round(accuracy(rows) * 100));
+  const bins = Array.from({ length: 10 }, (_, i) => ({ from: i * 10, to: i === 9 ? 100 : i * 10 + 9, count: 0 }));
+  scores.forEach(s => bins[Math.min(9, Math.floor(s / 10))].count++);
+  const maxBin = Math.max(1, ...bins.map(b => b.count));
+  const scoreStats = summarize(scores);
+  const speedAccuracy = pearson(allTrials.map(t => t.readingTimeMs), allTrials.map(t => (t.isCorrect ? 1 : 0)));
+
+  // Item analysis: difficulty (share correct) and discrimination (corrected item-total correlation:
+  // correct on this sentence vs the same person's accuracy on all their other sentences)
+  const sentenceOf = new Map(stimuli.map(s => [s.id, s.sentenceKazakh]));
+  const itemRows = new Map<string, TrialResult[]>();
+  allTrials.forEach(t => itemRows.set(t.stimulusId, [...(itemRows.get(t.stimulusId) ?? []), t]));
+  const items = [...itemRows.entries()].map(([id, rows]) => {
+    const xs: number[] = [];
+    const ys: number[] = [];
+    rows.forEach(r => {
+      const others = (trialsOf.get(r.participantId) ?? []).filter(o => o !== r);
+      if (others.length) {
+        xs.push(r.isCorrect ? 1 : 0);
+        ys.push(accuracy(others));
+      }
+    });
+    return {
+      id,
+      sentence: sentenceOf.get(id) ?? id,
+      order: rows[0].wordOrder,
+      level: rows[0].cefrLevel,
+      rows,
+      p: accuracy(rows),
+      rt: summarize(rows.map(r => r.readingTimeMs)).mean,
+      disc: xs.length >= 5 ? pearson(xs, ys) : NaN,
+    };
+  }).sort((a, b) => a.p - b.p);
+  const flag = (it: (typeof items)[number]) =>
+    it.disc < 0 ? tr('Тексеру керек', 'Проверить', 'Review')
+    : it.rows.length >= 5 && it.p >= 0.9 ? tr('Тым оңай', 'Слишком лёгкое', 'Too easy')
+    : it.rows.length >= 5 && it.p <= 0.3 ? tr('Тым қиын', 'Слишком трудное', 'Too hard')
+    : '';
 
   const byParticipant = [...participants].map(id => {
     const rows = allTrials.filter(t => t.participantId === id);
@@ -100,6 +144,34 @@ export const LiveDataAnalysis: React.FC<LiveDataAnalysisProps> = ({ allTrials, l
               `${noCohort} trials have no cohort label (older records) and are excluded from the cohort table.`)}
         </p>
       )}
+
+      <Section
+        title={tr('Нәтижелердің таралуы', 'Распределение результатов', 'Score distribution')}
+        note={tr(
+          `Әр қатысушының дұрыс жауап үлесі. Орташа ${Math.round(scoreStats.mean)}%, медиана ${Math.round(scoreStats.median)}%. Жылдамдық пен дәлдік байланысы r = ${num(speedAccuracy, 2)} (теріс мән: баяу оқу қатемен қатар жүреді).`,
+          `Доля верных ответов каждого участника. Среднее ${Math.round(scoreStats.mean)}%, медиана ${Math.round(scoreStats.median)}%. Связь скорости и точности r = ${num(speedAccuracy, 2)} (отрицательное значение: медленное чтение сопровождает ошибки).`,
+          `Each participant's share of correct answers. Mean ${Math.round(scoreStats.mean)}%, median ${Math.round(scoreStats.median)}%. Speed–accuracy r = ${num(speedAccuracy, 2)} (negative: slower reading goes with wrong answers).`
+        )}
+      >
+        <div className="space-y-0.5 max-w-xl" role="list">
+          {bins.map(b => (
+            <div
+              key={b.from}
+              role="listitem"
+              title={tr(`${b.from}–${b.to}%: ${b.count} адам`, `${b.from}–${b.to}%: ${b.count} чел.`, `${b.from}–${b.to}%: ${b.count} people`)}
+              className="flex items-center gap-3 text-xs"
+            >
+              <span className="w-16 shrink-0 text-right font-mono text-slate-500 dark:text-slate-400">{b.from}–{b.to}%</span>
+              <span className="flex-1 h-5 flex items-center gap-2">
+                {b.count > 0 && (
+                  <span className="h-full rounded-r-[4px] bg-emerald-600 dark:bg-emerald-500" style={{ width: `${(b.count / maxBin) * 100}%` }} />
+                )}
+                <span className="font-mono text-slate-700 dark:text-slate-300">{b.count}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </Section>
 
       <Section
         title={tr('Сөз тәртібі бойынша оқу уақыты', 'Время чтения по порядку слов', 'Reading time by word order')}
@@ -188,6 +260,49 @@ export const LiveDataAnalysis: React.FC<LiveDataAnalysisProps> = ({ allTrials, l
             })}
           </tbody>
         </table>
+      </Section>
+
+      <Section
+        title={tr('Сөйлемдер талдауы', 'Анализ предложений', 'Sentence (item) analysis')}
+        note={tr(
+          'Ең қиын сөйлемдер жоғарыда. Дұрыс: сөйлемге дұрыс жауап бергендер үлесі. Ажырату: осы сөйлемдегі нәтиже мен адамның басқа сөйлемдердегі нәтижесінің корреляциясы (0.3-тен жоғары жақсы, теріс мән сөйлемді тексеруді қажет етеді; n ≥ 5).',
+          'Самые трудные предложения сверху. Верно: доля верных ответов. Различение: корреляция ответа на это предложение с результатом человека на остальных (выше 0.3 хорошо, отрицательное значение требует проверки; n ≥ 5).',
+          'Hardest sentences first. Correct: share who answered it right. Discrimination: correlation between this sentence and the same person’s score on their other sentences (above 0.3 is good; negative means review the sentence; needs n ≥ 5).'
+        )}
+      >
+        <div className="max-h-[28rem] overflow-auto">
+          <table className={tableCls}>
+            <thead className={`${headCls} sticky top-0`}>
+              <tr>
+                {[tr('Сөйлем', 'Предложение', 'Sentence'), 'Order', 'Level', 'n', tr('Дұрыс', 'Верно', 'Correct'), 'P1', 'P2', 'P3', 'Mean RT', tr('Ажырату', 'Различение', 'Discrimination'), ''].map((h, i) => <th key={i} className={th}>{h}</th>)}
+              </tr>
+            </thead>
+            <tbody className={bodyCls}>
+              {items.map(it => (
+                <tr key={it.id}>
+                  <td lang="kk" className="p-2.5 font-sans min-w-[16rem] max-w-[22rem]">{it.sentence}</td>
+                  <td className={`${td} font-bold`}>{it.order}</td>
+                  <td className={td}>{it.level ?? '—'}</td>
+                  <td className={td}>{it.rows.length}</td>
+                  <td className={`${td} font-bold`}>{Math.round(it.p * 100)}%</td>
+                  <td className={td}>{acc(it.rows, t => t.part1Correct)}</td>
+                  <td className={td}>{acc(it.rows, t => t.part2Correct)}</td>
+                  <td className={td}>{acc(it.rows, t => t.part3Correct)}</td>
+                  <td className={td}>{num(it.rt)}</td>
+                  <td className={td}>{num(it.disc, 2)}</td>
+                  <td className={`${td} font-sans`}>
+                    {flag(it) && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900">
+                        <AlertTriangle className="w-3 h-3" />
+                        {flag(it)}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Section>
 
       {positions.length > 0 && (

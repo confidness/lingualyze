@@ -8,6 +8,8 @@ import {
   BookOpen,
   Home,
   Trophy,
+  ClipboardList,
+  GraduationCap,
   Volume2, 
   VolumeX, 
   Sun, 
@@ -82,6 +84,11 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   // Researcher-only pages, shown after sign-in as a separate group
   const researchItems: { id: ActiveTab; label: string; icon: React.ReactNode; badge?: string }[] = isResearcher ? [
+    {
+      id: 'answers',
+      label: lang === 'kk' ? 'Жауаптар' : lang === 'ru' ? 'Ответы' : 'Answers',
+      icon: <ClipboardList className="w-3.5 h-3.5" />
+    },
     {
       id: 'analytics',
       label: t.navAnalytics,
@@ -206,28 +213,26 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
-            {/* Researcher badge (clients reach researcher sign-in from the footer) */}
-            {isResearcher && (
+            {/* Scientist / teacher sign-in (or the signed-in badge, which opens sign-out) */}
             <button
               id="nav-auth-btn"
               onClick={onOpenAuthModal}
-              title={(t as any).authLogin || 'Auth / Role'}
-              className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-medium transition-all shadow-xs shrink-0 cursor-pointer ${
-                currentRole === 'researcher'
-                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
-                  : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:text-slate-900 dark:hover:text-white'
+              aria-label={isResearcher
+                ? (lang === 'kk' ? 'Ғалым режимі: шығу' : lang === 'ru' ? 'Режим учёного: выйти' : 'Scientist mode: sign out')
+                : (lang === 'kk' ? 'Ғалым немесе мұғалім ретінде кіру' : lang === 'ru' ? 'Войти как учёный или учитель' : 'Sign in as scientist or teacher')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all shadow-xs shrink-0 cursor-pointer ${
+                isResearcher
+                  ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700'
+                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300'
               }`}
             >
-              {currentRole === 'researcher' ? (
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              ) : (
-                <Lock className="w-3.5 h-3.5 text-slate-400" />
-              )}
-              <span className="font-mono text-[10px] font-bold">
-                {currentRole === 'researcher' ? 'PRO' : ((t as any).roleParticipant || 'User')}
+              {isResearcher ? <ShieldCheck className="w-3.5 h-3.5" /> : <GraduationCap className="w-3.5 h-3.5" />}
+              <span className="hidden lg:inline">
+                {isResearcher
+                  ? (lang === 'kk' ? 'Ғалым' : lang === 'ru' ? 'Учёный' : 'Scientist')
+                  : (lang === 'kk' ? 'Ғалым / мұғалім' : lang === 'ru' ? 'Учёный / учитель' : 'Scientist / teacher')}
               </span>
             </button>
-            )}
 
             {/* Compact Utility Cluster: Theme + Audio + Logout */}
             <div className="flex items-center gap-0.5 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 p-0.5 rounded-lg shrink-0">
