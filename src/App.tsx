@@ -16,6 +16,7 @@ import { ParticipantOnboarding } from './components/ParticipantOnboarding';
 import { ExperimentRunner } from './components/ExperimentRunner';
 import { MyResults } from './components/MyResults';
 import { AnswersView } from './components/AnswersView';
+import { ResearchDemo } from './components/ResearchDemo';
 import { InteractiveSimulator } from './components/InteractiveSimulator';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { SentenceDatabase } from './components/SentenceDatabase';
@@ -359,7 +360,7 @@ export default function App() {
           />
         )}
 
-        {tab === 'answers' && <AnswersView lang={lang} />}
+        {tab === 'answers' && <><ResearchDemo lang={lang} /><AnswersView lang={lang} /></>}
 
         {tab === 'analytics' && (
           <AnalyticsDashboard
