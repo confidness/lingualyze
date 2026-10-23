@@ -15,7 +15,7 @@ export async function rpc<T = void>(fn: string, args: Record<string, unknown>): 
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
-// The researcher passcode is kept for the session so research reads can be authorized
+// Stores the research session token (or a legacy passcode) for authorized reads.
 const PASSCODE_KEY = 'lingualyze_researcher_passcode';
 export const researcherPasscode = {
   get: (): string | null => {
@@ -25,6 +25,8 @@ export const researcherPasscode = {
     try { localStorage.setItem(PASSCODE_KEY, passcode); } catch { /* storage blocked */ }
   },
   clear: () => {
+    const token = researcherPasscode.get();
+    if (token) void rpc('researcher_logout', { token }).catch(() => undefined);
     try { localStorage.removeItem(PASSCODE_KEY); } catch { /* storage blocked */ }
   },
 };

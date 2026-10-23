@@ -34,7 +34,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onRoleChange,
   lang
 }) => {
+  const [username, setUsername] = useState('');
   const [passcode, setPasscode] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -50,14 +52,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     setErrorMessage('');
     setSuccessMessage('');
 
-    // Passcode is checked by the database, so it never ships in the browser bundle
-    const cleaned = passcode.trim();
-    const ok = await rpc<boolean>('is_researcher', { passcode: cleaned }).catch(() => null);
+    // The database checks credentials and returns a short-lived research access token.
+    let unavailable = false;
+    const token = await rpc<string | null>('researcher_login', {
+      username: username.trim(), password: passcode,
+    }).catch(() => { unavailable = true; return null; });
+    setIsSubmitting(false);
 
-    if (ok === null) {
+    if (unavailable) {
       setErrorMessage(
         lang === 'kk'
           ? 'Дерекқорға қосылу мүмкін болмады. Кейінірек қайталаңыз.'
@@ -65,8 +72,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           ? 'Не удалось подключиться к базе данных. Попробуйте позже.'
           : "Couldn't reach the database. Try again later."
       );
-    } else if (ok) {
-      researcherPasscode.set(cleaned);
+    } else if (token) {
+      researcherPasscode.set(token);
       changeRole('researcher');
       storageEngine.syncWithCentralBackend();
       setSuccessMessage(
@@ -87,7 +94,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           ? 'Құпиякод қате. Қайталап көріңіз.'
           : lang === 'ru'
           ? 'Неверный пароль. Попробуйте снова.'
-          : 'Invalid passcode. Please try again.'
+          : 'Invalid username or password. Please try again.'
       );
     }
   };
@@ -198,21 +205,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         ) : (
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
+              <label htmlFor="researcher-username" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                {lang === 'kk' ? 'Логин' : lang === 'ru' ? 'Логин' : 'Username'}
+              </label>
+              <input id="researcher-username" name="username" autoComplete="username" required
+                value={username} onChange={(e) => setUsername(e.target.value)} autoFocus
+                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-sm focus:outline-hidden focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 {lang === 'kk' ? 'Құпиякод' : lang === 'ru' ? 'Пароль' : 'Passcode'}
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  autoComplete="current-password"
+                  required
                   value={passcode}
                   onChange={(e) => setPasscode(e.target.value)}
                   placeholder={lang === 'kk' ? 'Құпиякодты енгізіңіз' : lang === 'ru' ? 'Введите пароль' : 'Enter passcode'}
                   className="w-full px-4 py-2.5 pr-10 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-sm font-mono focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-                  autoFocus
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                   className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -222,6 +240,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
             <button
               type="submit"
+              disabled={isSubmitting}
               className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs shadow-md shadow-emerald-600/20 active:translate-y-0.5 transition-all flex items-center justify-center gap-2"
             >
               <Unlock className="w-4 h-4" />
